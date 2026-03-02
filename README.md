@@ -2,7 +2,7 @@
 
 A growing collection of quantitative finance research projects built from scratch in Python.
 
-I am a PhD researcher in mechanical engineering transitioning into quantitative finance. This repository documents that journey — starting from first principles and progressively building more sophisticated tools and strategies. Each project is self-contained, fully documented, and includes a critical analysis of results, not just the wins.
+I am a PhD researcher in mechanical engineering, repositioning my skills into quantitative finance. This repository documents that journey — starting from first principles and progressively building more sophisticated tools and strategies. Each project is self-contained, fully documented, and includes a critical analysis of results, not just the wins.
 
 This is a work in progress. Projects will be added regularly as the research develops.
 
@@ -68,10 +68,10 @@ A MA20/MA50 crossover strategy tested on AAPL over 10 years, compared against bu
 |--------|----------|-----------------|----------------|
 | Total Return | 327% | 951% | 246% |
 | Sharpe Ratio | 0.53 | 0.68 | 0.47 |
-| Max Drawdown | -28.9% | -38.7% | — |
+| Max Drawdown | -28.9% | -38.7% | -34.1% |
 | CAGR | ~15.7% | ~26.5% | ~13.3% |
 
-**Main takeaway:** The strategy significantly underperforms buy-and-hold AAPL in bull markets but offers meaningful drawdown protection during crisis periods (e.g. 2020). It functions as a bear market defence mechanism rather than a return maximiser. Survivorship bias, transaction costs, and lookahead bias are acknowledged limitations.
+**Main takeaway:** The Buy/Sell strategy significantly underperforms buy-and-hold AAPL in bull markets but offers meaningful drawdown protection during crisis periods (e.g. 2020). It functions as a bear market defence mechanism rather than a return maximiser. Survivorship bias, transaction costs, and lookahead bias are acknowledged limitations.
 
 ---
 
@@ -90,4 +90,4 @@ A MA20/MA50 crossover strategy tested on AAPL over 10 years, compared against bu
 
 ## Disclaimer
 
-This repository is for educational and research purposes only. Nothing here constitutes financial advice. All strategies are tested on historical data and past performance does not guarantee future results.
+This repository is for educational and research purposes only. Nothing here constitutes financial advice. All strategies are tested on historical data, and past performance does not guarantee future results.
