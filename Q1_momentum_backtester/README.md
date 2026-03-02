@@ -30,7 +30,8 @@ Test whether a simple MA20/MA50 crossover strategy can outperform buying and hol
 | File | Description |
 |------|-------------|
 | `Q1_notebook.ipynb` | Main research notebook with analysis and results |
-| `Q1_functions.py` | Modular functions: `fetch_data()`, `add_signals()`, `run_backtest()`, `compute_metrics()`, `plot_performance()` |
+| `Q1_functions.py` | Modular functions: `add_signals()`, `run_backtest()`, `compute_metrics()`, `plot_performance()` |
+| `common.py` | Functions used in multiple projects: `fetch_data()` |
 
 ---
 
@@ -39,9 +40,9 @@ Test whether a simple MA20/MA50 crossover strategy can outperform buying and hol
 | Metric | Buy/Sell | Buy/Sell (Tranched) | Buy & Hold AAPL | Buy & Hold SPY |
 |--------|----------|---------------------|-----------------|----------------|
 | Total Return | 327% | 310% | 951% | 246% |
-| Sharpe Ratio | 0.53 | — | 0.68 | 0.47 |
-| Max Drawdown | -28.9% | -22.7% | -38.7% | — |
-| Win Rate | — | — | — | — |
+| Sharpe Ratio | 0.53 | 0.55 | 0.68 | 0.47 |
+| Max Drawdown | -28.9% | -22.7% | -38.7% | -34.1% |
+| Win Rate | ~52% | ~70% | — | — |
 
 **The strategy outperforms SPY on raw returns but significantly underperforms buy-and-hold AAPL.** The tranched version sacrifices ~17% total return in exchange for a meaningfully lower max drawdown (-22.7% vs -28.9%).
 
@@ -66,7 +67,7 @@ The strategy performs best during **high volatility and crisis periods** (e.g. 2
 ## Next Steps
 
 - Add transaction costs to the engine
-- Test across a broader universe of tickers including losers
+- Test across a broader universe of tickers, including losers
 - Explore what asset characteristics (volatility, trend strength) predict strategy success
 
 ---
