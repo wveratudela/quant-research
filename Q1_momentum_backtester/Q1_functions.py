@@ -4,17 +4,7 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 import seaborn as sns
 
-def fetch_data(ticker, start, end):
 
-    df = yf.download(ticker, start=start, end=end, interval="1d", auto_adjust=False, progress=False)
-    df.columns = df.columns.get_level_values(0)
-    df = df[['Close', 'Volume']]
-    df = df.ffill()
-
-    return df
-
-
-    
 def add_signals(df):
     
     df = df.copy()
@@ -37,7 +27,6 @@ def add_signals(df):
     df['Death_Cross'] = (df['Signal'] == 0) & (df['Signal'].shift(1) == 1)   # MA20 crosses below MA50
     
     return df
-
 
 
 def run_backtest(df, starting_capital, tranche=False):
@@ -99,7 +88,6 @@ def run_backtest(df, starting_capital, tranche=False):
     df['Buy_Hold'] = (starting_capital / df['Close'].iloc[0]) * df['Close']
 
     return df
-
 
 
 def compute_metrics(df,starting_capital):
@@ -215,9 +203,8 @@ def compute_metrics(df,starting_capital):
 
     return df, comparison_table, yearly_df
 
-def plot_performance(dA,dS,yA,yS):
-
     
+def plot_performance(dA,dS,yA,yS):
 
     plt.figure(figsize=(18, 6))
     colors = sns.color_palette("colorblind")
