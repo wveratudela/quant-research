@@ -1,0 +1,26 @@
+# Secrets / env files
+.env
+.env.*
+*.env
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS noise
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# Data files (avoid committing large CSVs)
+*.csv
+*.parquet
+*.h5
