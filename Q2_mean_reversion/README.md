@@ -1,279 +1,96 @@
-# EXECUTIVE SUMMARY: Your 4-Project Quantitative Finance Portfolio
+# Q2 — Pairs Trading
 
-## The Bottom Line
-
-You have **comprehensive implementation guides** for 4 production-grade quantitative finance projects that will:
-
-✅ **Showcase your ML/AI research transition**
-✅ **Demonstrate rigorous software engineering**
-✅ **Open doors at ETH Zürich, fintech, and tech companies**
-✅ **Be shippable in 1-2 weeks with focused effort**
+A market-neutral pairs trading framework built from scratch to exploit the cointegration relationship between two financially linked assets.
 
 ---
 
-## What You're Shipping
+## Objective
 
-| Project | Purpose | Tech Stack | Key Differentiator |
-|---------|---------|-----------|-------------------|
-| **Monte Carlo Option Pricer** | Numerical methods + stochastic modeling | NumPy, SciPy | Variance reduction (antithetic variates) |
-| **Portfolio Optimizer** | Real-world constraint optimization | CVXPY, Pandas | Sector limits + cardinality constraints |
-| **Market Crash Simulator** | Tail risk + regime switching | NumPy, SciPy | Jump-diffusion with Markov regimes |
-| **Volatility Forecasting** | Hybrid ML approach | TensorFlow, ARCH, Scikit-learn | GARCH-LSTM ensemble (research-grade) |
+Identify a statistically cointegrated pair of stocks, model the spread between them, and trade mean reversion of that spread. Evaluate performance not on absolute returns, but on risk-adjusted metrics and capital preservation — the true value proposition of market-neutral strategies.
 
 ---
 
-## Documentation Provided
+## Strategy Logic
 
-### 1. **quant_portfolio_guide.md** (COMPREHENSIVE)
-   - Complete implementation code for all 4 projects
-   - Mathematical foundations explained
-   - Testing strategies
-   - GitHub repository structure
-   - Production best practices
+**Pair Selection**
+- Test each asset individually for non-stationarity (ADF test, p > 0.05 required)
+- Test the pair for cointegration (Engle-Granger test, p < 0.05 required)
+- Calculate hedge ratio β via OLS regression: `Spread = Asset_1 - β × Asset_2`
+- Validate with R² and out-of-sample stability check
 
-### 2. **github_deployment.md** (DEPLOYMENT)
-   - Step-by-step GitHub setup
-   - CI/CD pipeline configuration
-   - Professional README templates
-   - Code quality standards
-   - Type hints and docstring formats
+**Signal Generation**
+- Calculate rolling z-score of the spread: `z = (Spread - μ_252d) / σ_60d`
+- Mixed windows: 252-day mean (stable equilibrium anchor), 60-day std (responsive to current volatility)
+- State machine signal: enter on |z| > 2, exit when z reverts to 0
 
-### 3. **career_strategy.md** (POSITIONING)
-   - How to position projects for different audiences
-   - ETH Zürich → Emphasize research contributions
-   - FinTech → Emphasize practical impact
-   - Tech/AI → Emphasize hybrid ML approach
-   - Interview preparation talking points
-   - LinkedIn optimization strategy
+**Execution**
+- z > +2 → short Asset 1, long Asset 2 (spread will narrow)
+- z < -2 → long Asset 1, short Asset 2 (spread will widen back)
+- Dollar-neutral on entry: equal capital allocated to each leg
+- Short proceeds fund the long leg — net cash outflow approximately zero
 
-### 4. **quick_start.md** (EXECUTION)
-   - Copy-paste ready code
-   - Day-by-day implementation plan
-   - Testing templates
-   - Fast-track options (16-40 hours total)
+**P&L Tracking**
+- Realized P&L (cash) — locked in on trade close, used for metrics
+- Mark-to-market Total (cash + open position value) — used for equity curve
+- The distinction between realized and unrealized P&L is explicitly acknowledged
 
 ---
 
-## Your Next Steps (TODAY)
+## Pair Tested
 
-### Immediate Actions (Next 2 hours)
-
-1. **Create 4 GitHub repositories:**
-   ```
-   monte-carlo-option-pricer
-   portfolio-optimizer-cvxpy
-   market-crash-simulator
-   volatility-forecasting-ml
-   ```
-
-2. **Clone locally** and create basic structure:
-   ```bash
-   mkdir ~/quant_portfolio && cd ~/quant_portfolio
-   # Create src/, tests/, examples/ in each
-   ```
-
-3. **Start with Project 1** (Monte Carlo Option Pricer):
-   - Copy the code from `quick_start.md`
-   - Create tests from the templates
-   - Write README from `github_deployment.md`
-   - Push to GitHub
-
-### Week 1 Execution
-
-**Mon-Wed**: Core implementations (all 4 projects)
-- Follow day-by-day breakdown in `quick_start.md`
-- Use code snippets provided
-- Run tests locally
-
-**Thu-Fri**: Documentation & Polish
-- Add CI/CD pipelines
-- Professional README files
-- Real data examples (yfinance)
-- Push all 4 repos
-
-### Week 2: Market & Networking
-
-**Mon-Tue**: Real data validation
-- Add benchmark examples
-- Compare volatility forecasts to market
-- Validate optimizer against historical data
-
-**Wed-Fri**: LinkedIn + Outreach
-- Update profile with projects
-- Write 1-2 posts about hybrid ML approach
-- Reach out to 10 target organizations
+**Visa (V) and Mastercard (MA)** — selected after systematic testing of multiple candidate pairs. KO/PEP, XOM/CVX, and MSFT/AAPL all failed the cointegration test over the 10-year window. V/MA passed with p = 0.0006, reflecting their near-identical business models and shared exposure to consumer spending and payment network economics.
 
 ---
 
-## Why This Portfolio is Powerful
+## Files
 
-### For Academic (ETH Zürich)
-- Physics-informed ML (GARCH-LSTM) ← Research credibility
-- Rigorous mathematical foundation
-- Peer-reviewed approaches (jump-diffusion, GARCH)
-
-### For FinTech
-- Production-ready code (not notebooks)
-- Real constraints (sector limits, cardinality)
-- Immediate business value
-
-### For Tech/AI
-- Hybrid learning approach (novel)
-- Strong mathematical foundation
-- Software engineering best practices
+| File | Description |
+|------|-------------|
+| `Q2_notebook.ipynb` | Main research notebook with analysis and results |
+| `Q2_functions.py` | Modular functions: `fetch_data()`, `check_data()`, `check_signals()`, `run_pairs_trading()`, `compute_metrics()`, `plot_performance()` |
 
 ---
 
-## Success Metrics
+## Results (V/MA, 10 years)
 
-You'll know this is working when:
-
-**By End of Week 1:**
-- ✅ 4 GitHub repos created
-- ✅ All tests passing
-- ✅ Real data examples working
-- ✅ Professional documentation
-
-**By End of Week 2:**
-- ✅ 50+ GitHub stars across repos
-- ✅ LinkedIn profile updated
-- ✅ 5+ recruiters contacted
-- ✅ 2-3 informational interviews scheduled
-
-**By End of Month:**
-- ✅ 3+ concrete interview invitations
-- ✅ 1-2 serious job offers in hand
+| Metric | Pairs V/MA | Buy & Hold V | Buy & Hold MA | Buy & Hold SPY |
+|--------|------------|--------------|---------------|----------------|
+| Total Return | 58% | 345% | 492% | 242% |
+| Sharpe Ratio | 0.13 | 0.45 | 0.52 | 0.46 |
+| Max Drawdown | -2.1% | -36.4% | -41.0% | -34.1% |
+| CAGR | 4.7% | 16.1% | 19.5% | 13.1% |
 
 ---
 
-## Quick Reference: File Contents
+## When Does It Work?
 
-### For Implementation Details
-→ Read: **quant_portfolio_guide.md**
-- Complete working code
-- Mathematical explanations
-- Testing approaches
-- Project structure
+The strategy is explicitly **market-neutral** — it does not capture bull market returns. Its value is most visible during crisis periods. The 2020 COVID crash that reduced buy-and-hold portfolios by 30-40% left the pairs strategy virtually untouched, as losses on one leg were offset by gains on the other.
 
-### For GitHub Setup
-→ Read: **github_deployment.md**
-- Repository configuration
-- CI/CD workflows
-- Professional README templates
-- Code quality standards
+The strategy performs best in **volatile, mean-reverting markets** where the spread oscillates predictably. It underperforms when the cointegration relationship drifts or breaks, generating false signals on a widening spread that never reverts.
 
-### For Career Positioning
-→ Read: **career_strategy.md**
-- Target-specific positioning
-- Interview talking points
-- LinkedIn optimization
-- Timeline to offers
-
-### For Fast Execution
-→ Read: **quick_start.md**
-- Copy-paste code
-- Day-by-day plan
-- Test templates
-- 16-40 hour timeline
+**Character of the strategy:** capital preservation tool, not a return maximiser. In an institutional context, the near-zero drawdown and market-neutral returns become commercially significant when leveraged.
 
 ---
 
-## Key Strengths of This Approach
+## Limitations
 
-1. **Real Research Quality**
-   - Not toy examples
-   - Based on published methods (GINN, jump-diffusion, etc.)
-   - Production-grade implementation
-
-2. **Complete Package**
-   - Core code ✅
-   - Tests ✅
-   - Documentation ✅
-   - CI/CD ✅
-   - Examples ✅
-
-3. **Career Narrative**
-   - Shows technical depth
-   - Demonstrates transition (Finance → ML/AI)
-   - Tells story of continuous learning
-
-4. **Immediate Practical Value**
-   - Portfolio optimizer works now
-   - Volatility forecaster can predict real markets
-   - Crash simulator for risk management
-   - Option pricer validates against Black-Scholes
-
-5. **Hiring Signal**
-   - Professional code practices
-   - Testing mindset
-   - Documentation discipline
-   - Software engineering maturity
+1. **Zero borrow rate** — shorting shares incurs an annualized borrow fee (typically 0.5–3% for liquid large-caps) and margin requirements. Neither is modelled here, meaningfully overstating real returns.
+2. **Cointegration instability** — the cointegration relationship was validated on historical data but can break permanently due to regulatory changes, competitive shifts, or macroeconomic regime changes. The strategy has no mechanism to detect structural breaks and will continue generating signals on a broken relationship indefinitely.
+3. **Realized vs unrealized P&L** — metrics are calculated on realized cash (closed trades) rather than mark-to-market total value. This is a deliberate methodological choice that more honestly reflects delivered performance, but understates intraday volatility. A full implementation would report both.
 
 ---
 
-## Timeline Summary
+## Next Steps
 
-| When | What | Outcome |
-|------|------|---------|
-| **Today** | Create repos, start Project 1 | 1 repo live |
-| **Day 2-3** | Complete Project 1-2 | 2 repos live |
-| **Day 4-5** | Complete Project 3-4 | 4 repos live |
-| **Week 2** | Polish, add real data | 4 repos polished |
-| **Week 2+** | LinkedIn, reach out | Interview pipeline |
-| **Weeks 3-4** | Interview prep, offers | Job offers |
-
-**Total effort: 40-50 hours over 1-2 weeks**
-**Total impact: Career-defining portfolio**
+- Add borrow rate and transaction costs
+- Implement rolling cointegration testing to detect relationship breakdown
+- Test across a broader universe of candidate pairs
+- Explore dynamic hedge ratio (Kalman filter) instead of static OLS β
 
 ---
 
-## One More Thing: The Interview
+## Dependencies
 
-When someone asks "Walk me through one of your projects," you'll say:
-
-**"I built a hybrid volatility forecasting model combining GARCH with LSTM neural networks. Traditional GARCH captures mean reversion and clustering, but misses nonlinear patterns. LSTM captures those patterns but can overfit. By combining both (inspired by physics-informed neural networks), we achieved 5% better out-of-sample performance.**
-
-**The core insight: blend domain knowledge (GARCH) with flexible learning (LSTM). This hybrid approach generalizes better than either alone, which I validated on SPY data from 2020-2024.**
-
-**The code is on GitHub with full tests and real data examples. I also implemented portfolio optimization with realistic constraints (sector limits, cardinality) and a crash simulator using jump-diffusion processes to model tail events.**
-
-**These projects show my transition from combustion engineering research into ML/AI—same rigor, applied to modern machine learning."**
-
-That's a conversation starter. That's a hire.
-
----
-
-## Final Thoughts
-
-You've got everything you need:
-
-1. ✅ **Complete code implementations** (copy-paste ready)
-2. ✅ **Professional documentation** (templates provided)
-3. ✅ **GitHub best practices** (workflows, testing, CI/CD)
-4. ✅ **Career strategy** (positioning for different audiences)
-5. ✅ **Execution timeline** (realistic 1-2 weeks)
-
-The hard part (research, design, architecture) is done. Now it's just execution.
-
-**Your move. Ship these projects. This week. 🚀**
-
----
-
-## Questions? Next Steps?
-
-1. **"Where do I start?"** → Read `quick_start.md`, start with Project 1
-2. **"How detailed should I make the code?"** → See `quant_portfolio_guide.md` for full implementations
-3. **"How do I deploy?"** → See `github_deployment.md` for GitHub setup and CI/CD
-4. **"How do I present these?"** → See `career_strategy.md` for positioning and interview prep
-
-You've got this. Go build something awesome.
-
-**Made with ❤️ for your career success.**
-
----
-
-*Last updated: February 2026*
-*For: Research Engineer → ML/AI Researcher transition*
-*Location: Zürich, Switzerland*
-*Target: ETH Zürich, FinTech, Tech/AI roles*
-
+```
+pandas, numpy, yfinance, matplotlib, seaborn, statsmodels, scikit-learn
+```
