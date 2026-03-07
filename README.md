@@ -33,8 +33,10 @@ quant-research/
 │   ├── Q2_functions.py
 │   └── README.md
 │
-├── Q3_portfolio_optimisation/       ← Coming soon
-│   └── ...
+├── Q3_portfolio_optimization/
+│   ├── Q3_notebook.ipynb
+│   ├── Q3_functions.py
+│   └── README.md
 │
 ├── Q4_mixed_asset_portfolio/        ← Coming soon
 │   └── ...
@@ -54,9 +56,11 @@ quant-research/
 |---|---------|--------|-------------|
 | Q1 | Momentum Backtester | ✅ Complete | MA crossover, signal generation, performance metrics |
 | Q2 | Mean Reversion & Pairs Trading | ✅ Complete | Cointegration, z-score signals, spread trading |
-| Q3 | Multi-Asset Portfolio Optimisation | 🔄 In progress | Markowitz, Sharpe maximisation, Magnificent 7 vs SPY |
-| Q4 | Mixed Asset Class Portfolio | 📋 Planned | Stocks + crypto + ETFs, rebalancing strategies |
+| Q3 | Multi-Asset Portfolio Optimisation | ✅ Complete | Markowitz, Sharpe maximisation, Magnificent 7 vs SPY |
+| Q4 | Mixed Asset Class Portfolio | 🔄 In progress | Stocks + crypto + ETFs, rebalancing strategies |
 | Q5 | ML Signal Generation | 📋 Planned | Feature engineering, classification, signal prediction |
+| Q6 | Lyapunov stability | 📋 Planned | Novel contribution |
+
 
 ---
 
@@ -89,6 +93,23 @@ A market-neutral pairs trading strategy on V/MA, tested over 10 years, compared 
 | CAGR | 4.7% | 16.1% | 19.5% | 13.1% |
 
 **Main takeaway:** The pairs strategy delivers modest absolute returns but with a near-zero maximum drawdown of -2.1% — roughly 17x better capital preservation than buy-and-hold alternatives. The 2020 crash that wiped 30-40% from all other strategies left the pairs portfolio virtually untouched. The strategy is not a return maximiser — it is a capital preservation tool, most valuable to risk-averse investors or as a market-neutral complement to a directional portfolio. In a leveraged institutional context, the stable low-volatility returns become commercially significant.
+
+---
+
+### Q3 — Portfolio Optimisation (Magnificent 7, 5 years)
+
+Markowitz mean-variance optimisation and Black-Litterman model applied to the Magnificent 7, compared against equal-weight allocation and SPY.
+
+| Portfolio | Final Value ($10k start) | Volatility | Sharpe |
+|-----------|--------------------------|------------|--------|
+| Equal Weight | ~$40,000 | 29.9% | 1.09 |
+| Target Return Optimised | ~$40,000 | 26.6% | — |
+| Minimum Variance | ~$22,000 | 24.2% | — |
+| Max Sharpe (100% NVDA) | ~$160,000 | 51.8% | 1.83 |
+| Black-Litterman | — | 24.2% | 0.48 |
+| SPY benchmark | ~$18,000 | — | 0.46 |
+
+**Main takeaway:** Markowitz optimisation successfully reduces portfolio volatility by 11.2% while maintaining equal-weight returns — but the unconstrained Sharpe maximisation degenerates to 100% NVDA, exposing the critical weakness of mean-variance optimisation: estimation error. Raw historical returns are a poor proxy for future expectations. Black-Litterman addresses this by anchoring to market equilibrium returns and blending in investor views with explicit confidence levels, producing more diversified and robust portfolios. The most counterintuitive finding: META appeared in nearly every optimised portfolio despite subjective underperformance, because its low correlation with other assets provides a genuine diversification benefit that the optimizer refuses to discard.
 
 ---
 
