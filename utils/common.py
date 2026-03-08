@@ -31,9 +31,18 @@ def market_cap(tickers):
     
     for t in tickers:
         info = yf.Ticker(t).info
-        market_caps[t] = info.get("marketCap", None)
+        
+        mc = info.get("marketCap")
+        if mc is None:
+            mc = info.get("totalAssets")     # ETFs
+        if mc is None:
+            supply = info.get("circulatingSupply")
+            price = info.get("currentPrice") or info.get("regularMarketPrice")
+            if supply and price:
+                mc = supply * price       # crypto fallback
+        
+        market_caps[t] = mc
     
     market_caps_df = pd.DataFrame.from_dict(market_caps, orient="index", columns=["MarketCap"])
-    market_caps_df = market_caps_df.sort_index()
     
     return market_caps_df
