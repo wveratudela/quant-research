@@ -57,23 +57,23 @@ Selected as a representative large-cap tech portfolio. All assets share positive
 | Portfolio | Final Value | Return | Volatility | Sharpe |
 |-----------|-------------|--------|------------|--------|
 | Equal Weight | ~$40,000 | ~300% | 29.9% | 1.09 |
-| Target Return Optimised | ~$40,000 | ~300% | 26.6% | — |
-| Minimum Variance | ~$22,000 | ~120% | 24.2% | — |
-| Max Sharpe (100% NVDA) | ~$160,000 | ~1,500% | 51.8% | 1.83 |
-| Black-Litterman | — | ~15-17% | 24.2% | 0.48 |
-| SPY (benchmark) | ~$18,000 | ~80% | — | 0.46 |
+| Target Return Optimised | ~$45,000 | ~350% | 26.6% | — |
+| Minimum Variance | ~$21,000 | ~110% | 24.2% | — |
+| Max Sharpe (100% NVDA) | ~$153,000 | ~1,430% | 51.8% | 1.83 |
+| Black-Litterman | ~$49,000 | ~390% | 24.2% | 0.48 |
+| SPY (benchmark) | ~$17,000 | ~70% | — | 0.46 |
 
 ### Optimised Weights — Key Portfolios
 
 | Asset | Equal | Target Return | Min Variance | Black-Litterman |
 |-------|-------|---------------|--------------|-----------------|
-| AAPL | 14.3% | 34.4% | ~40% | 31.6% |
-| AMZN | 14.3% | 0.3% | ~0% | 0.0% |
-| GOOGL | 14.3% | 21.7% | ~25% | 41.0% |
-| META | 14.3% | 17.5% | ~10% | 3.4% |
-| MSFT | 14.3% | 0.0% | ~15% | 0.0% |
-| NVDA | 14.3% | 26.5% | ~10% | 24.0% |
-| TSLA | 14.3% | 0.0% | ~0% | 0.0% |
+| AAPL | 14.3% | 34.2% | 36.8% | 18.8% |
+| AMZN | 14.3% | 0.0% | 0.0% | 11.4% |
+| GOOGL | 14.3% | 26.6% | 14.4% | 17.9% |
+| META | 14.3% | 0.0% | 0.0% | 8.1% |
+| MSFT | 14.3% | 21.9% | 48.9% | 15.1% |
+| NVDA | 14.3% | 17.29% | 0.0% | 21.4% |
+| TSLA | 14.3% | 0.0% | 0.0% | 7.4% |
 
 ---
 
