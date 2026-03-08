@@ -56,12 +56,12 @@ Selected as a representative large-cap tech portfolio. All assets share positive
 
 | Portfolio | Final Value | Return | Volatility | Sharpe |
 |-----------|-------------|--------|------------|--------|
-| Equal Weight | ~$40,000 | ~300% | 29.9% | 1.09 |
+| Equal Weight | ~$40,000 | ~300% | 29.9% | 1.07 |
 | Target Return Optimised | ~$45,000 | ~350% | 26.6% | — |
-| Minimum Variance | ~$21,000 | ~110% | 24.2% | — |
-| Max Sharpe (100% NVDA) | ~$153,000 | ~1,430% | 51.8% | 1.83 |
-| Black-Litterman | ~$49,000 | ~390% | 24.2% | 0.48 |
-| SPY (benchmark) | ~$17,000 | ~70% | — | 0.46 |
+| Minimum Variance | ~$21,000 | ~110% | 23.7% | — |
+| Max Sharpe (100% NVDA) | ~$153,000 | ~1,430% | 51.8% | 1.80 |
+| Black-Litterman | ~$49,000 | ~390% | 26.6% | - |
+| SPY (benchmark) | ~$17,000 | ~70% | — | - |
 
 ### Optimised Weights — Key Portfolios
 
