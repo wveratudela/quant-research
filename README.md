@@ -38,8 +38,10 @@ quant-research/
 │   ├── Q3_functions.py
 │   └── README.md
 │
-├── Q4_mixed_asset_portfolio/        ← Coming soon
-│   └── ...
+├── Q4_mixed_asset_portfolio/
+│   ├── Q4_notebook.ipynb
+│   ├── Q4_functions.py
+│   └── README.md
 │
 ├── Q5_ml_signal_generation/         ← Coming soon
 │   └── ...
@@ -57,8 +59,8 @@ quant-research/
 | Q1 | Momentum Backtester | ✅ Complete | MA crossover, signal generation, performance metrics |
 | Q2 | Mean Reversion & Pairs Trading | ✅ Complete | Cointegration, z-score signals, spread trading |
 | Q3 | Multi-Asset Portfolio Optimisation | ✅ Complete | Markowitz, Sharpe maximisation, Magnificent 7 vs SPY |
-| Q4 | Mixed Asset Class Portfolio | 🔄 In progress | Stocks + crypto + ETFs, rebalancing strategies |
-| Q5 | ML Signal Generation | 📋 Planned | Feature engineering, classification, signal prediction |
+| Q4 | Mixed Asset Class Portfolio | ✅ Complete | Stocks + crypto + ETFs, rebalancing strategies |
+| Q5 | ML Signal Generation | 🔄 In progress | Feature engineering, classification, signal prediction |
 | Q6 | Lyapunov stability | 📋 Planned | Novel contribution |
 
 
@@ -110,6 +112,22 @@ Markowitz mean-variance optimisation and Black-Litterman model applied to the Ma
 | SPY benchmark | ~$17,000 | — | - |
 
 **Main takeaway:** Markowitz optimisation successfully reduces portfolio volatility by 11.2% while maintaining equal-weight returns — but the unconstrained Sharpe maximisation degenerates to 100% NVDA, exposing the critical weakness of mean-variance optimisation: estimation error. Raw historical returns are a poor proxy for future expectations. Black-Litterman addresses this by anchoring to market equilibrium returns and blending in investor views with explicit confidence levels, producing more diversified and robust portfolios. The most counterintuitive finding: META appeared in nearly every optimised portfolio despite subjective underperformance, because its low correlation with other assets provides a genuine diversification benefit that the optimizer refuses to discard.
+
+---
+
+### Q4 — Mixed Asset Class Portfolio (Stocks + Crypto + ETFs, ~8 years)
+
+Multi-asset portfolio optimisation across 10 assets spanning equities, cryptocurrencies, gold, bonds, and international ETFs. Extends Q3's Markowitz and Black-Litterman framework to demonstrate the value of true cross-asset diversification.
+
+| Portfolio | Final Value ($10k) | Volatility | Key Weights |
+|-----------|-------------------|------------|-------------|
+| Equal Weight | ~$65,000 | 26.1% | 10% each |
+| Target Return Optimised | ~$95,000 | 14.4% | GLD 67%, NVDA 18% |
+| Minimum Variance | ~$20,000 | 7.0% | TLT 42%, GLD 27%, SPY 25% |
+| Maximum Sharpe | ~$130,000 | — | GLD 60%, NVDA 29% |
+| Black-Litterman | ~$145,000 | 14.4% | NVDA 36%, AAPL 33%, BTC 11% |
+
+**Main takeaway:** Cross-asset diversification is fundamentally more powerful than sector diversification. Adding gold (GLD) and long-term Treasuries (TLT) — both with near-zero or negative correlations with equities — dropped the minimum variance portfolio volatility from 0.24 (Q3, Mag 7 only) to 0.07. The source of diversification matters more than the number of assets. Black-Litterman with investor views outperformed all methods (~$145k), confirming that quantitative optimisation combined with informed conviction produces better outcomes than either approach alone. Key lesson: bonds protect against recession-driven crashes but fail catastrophically during inflation — TLT lost value in 2022 while equities also fell, demonstrating that no asset is an unconditional safe haven.
 
 ---
 
