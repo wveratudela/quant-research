@@ -79,9 +79,9 @@ Selected as a representative large-cap tech portfolio. All assets share positive
 
 ## Key Findings
 
-**Diversification through low correlation beats individual asset quality.** META appeared in nearly every optimised portfolio despite being a subjective underperformer — its low correlation with other assets (0.34–0.44) contributes genuine variance reduction. An asset's portfolio value is not determined by its standalone performance.
+**The efficiency principle consistently eliminates assets with poor return-to-volatility ratios.** TSLA, META, and AMZN were zeroed out across all optimised portfolios. META is a particularly instructive case — despite having the lowest correlation with TSLA (0.34), its 43.6% volatility relative to only 31.7% return makes it inefficient. MSFT delivers comparable returns at far lower risk (~26% volatility), making META redundant. Within a correlated sector like Mag 7, there are no hidden diversification gems — every asset is evaluated on its own return/risk merit because all correlations are positive and similar.
 
-**The efficiency principle eliminates high-volatility, low-return assets.** TSLA and AMZN were consistently zeroed out. Both sit inside the efficient frontier individually — meaning a combination of other assets can achieve the same return with lower risk.
+**The efficiency principle eliminates high-volatility, low-return assets.** TSLA, META, and AMZN were consistently zeroed out. All three sit inside the efficient frontier individually — meaning a combination of the remaining assets achieves the same return with lower risk. True diversification benefit only emerges when genuinely uncorrelated asset classes are introduced, as demonstrated in Q4.
 
 **Raw Markowitz is dangerously overfit to historical data.** The unconstrained Sharpe maximisation allocated 100% to NVDA — a direct consequence of NVDA's exceptional 5-year AI-driven run. This illustrates estimation error: small changes in expected returns produce wildly different optimal weights. This is the most famous weakness of mean-variance optimisation.
 
@@ -89,7 +89,7 @@ Selected as a representative large-cap tech portfolio. All assets share positive
 
 **The portfolio value comparison is illustrative, not predictive.** Weights are optimised on the same data used to evaluate performance. A proper out-of-sample evaluation would require rolling window optimisation and forward testing.
 
-**Main takeaway:** Markowitz optimisation successfully reduces portfolio volatility by 13.2% while maintaining market-weight returns — but the unconstrained Sharpe maximisation degenerates to 100% NVDA, exposing the critical weakness of mean-variance optimisation: estimation error. Raw historical returns are a poor proxy for future expectations. Black-Litterman addresses this by anchoring to market equilibrium returns and blending in investor views with explicit confidence levels, producing more diversified and robust portfolios. The most counterintuitive finding: META appeared in nearly every optimised portfolio despite subjective underperformance, because its low correlation with other assets provides genuine diversification benefit that the optimizer refuses to discard.
+**Main takeaway:** Markowitz optimisation successfully reduces portfolio volatility by 13.2% while maintaining market-weight returns — but the unconstrained Sharpe maximisation degenerates to 100% NVDA, exposing the critical weakness of mean-variance optimisation: estimation error. Raw historical returns are a poor proxy for future expectations. Black-Litterman addresses this by anchoring to market equilibrium returns and blending in investor views with explicit confidence levels, producing more diversified and robust portfolios. The key finding: within a single correlated sector, the optimizer eliminates every asset that cannot justify its volatility with sufficient return. MSFT, AAPL, GOOGL, and NVDA survive because they occupy distinct positions on the return/risk spectrum. TSLA, META, and AMZN do not.
 
 ---
 
