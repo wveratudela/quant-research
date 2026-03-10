@@ -43,7 +43,7 @@ def returns_volatility(df):
     
     plt.show()
 
-    return mu_annual, sigma_annual, cov_annual
+    return mu_annual, sigma_annual, cov_annual, cov_matrix, corr_matrix
 
 
 def portfolio_return(w, mu):
