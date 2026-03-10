@@ -108,10 +108,10 @@ Markowitz mean-variance optimisation and Black-Litterman model applied to the Ma
 | Target Return Optimised | ~$45,000 | 26.6% | — |
 | Minimum Variance | ~$21,000 | 23.7% | — |
 | Max Sharpe (100% NVDA) | ~$153,000 | 51.8% | 1.80 |
-| Black-Litterman | ~$49,000 | 26.6% | - |
+| Black-Litterman | ~$48,000 | 25.9% | - |
 | SPY benchmark | ~$17,000 | — | - |
 
-**Main takeaway:** Markowitz optimisation successfully reduces portfolio volatility by 11.2% while maintaining equal-weight returns — but the unconstrained Sharpe maximisation degenerates to 100% NVDA, exposing the critical weakness of mean-variance optimisation: estimation error. Raw historical returns are a poor proxy for future expectations. Black-Litterman addresses this by anchoring to market equilibrium returns and blending in investor views with explicit confidence levels, producing more diversified and robust portfolios. The most counterintuitive finding: META appeared in nearly every optimised portfolio despite subjective underperformance, because its low correlation with other assets provides a genuine diversification benefit that the optimizer refuses to discard.
+**Main takeaway:** Markowitz optimisation successfully reduces portfolio volatility by 13.2% while maintaining market-weight returns — but the unconstrained Sharpe maximisation degenerates to 100% NVDA, exposing the critical weakness of mean-variance optimisation: estimation error. Raw historical returns are a poor proxy for future expectations. Black-Litterman addresses this by anchoring to market equilibrium returns and blending in investor views with explicit confidence levels, producing more diversified and robust portfolios. The key finding: within a single correlated sector, the optimizer eliminates every asset that cannot justify its volatility with sufficient return. MSFT, AAPL, GOOGL, and NVDA survive because they occupy distinct positions on the return/risk spectrum. TSLA, META, and AMZN do not.
 
 ---
 
