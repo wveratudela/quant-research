@@ -111,7 +111,7 @@ Markowitz mean-variance optimisation and Black-Litterman model applied to the Ma
 | Black-Litterman | ~$48,000 | 25.9% | - |
 | SPY benchmark | ~$17,000 | — | - |
 
-**Main takeaway:** Markowitz optimisation successfully reduces portfolio volatility by 13.2% while maintaining market-weight returns — but the unconstrained Sharpe maximisation degenerates to 100% NVDA, exposing the critical weakness of mean-variance optimisation: estimation error. Raw historical returns are a poor proxy for future expectations. Black-Litterman addresses this by anchoring to market equilibrium returns and blending in investor views with explicit confidence levels, producing more diversified and robust portfolios. The key finding: within a single correlated sector, the optimizer eliminates every asset that cannot justify its volatility with sufficient return. MSFT, AAPL, GOOGL, and NVDA survive because they occupy distinct positions on the return/risk spectrum. TSLA, META, and AMZN do not.
+**Main takeaway:** Markowitz optimisation successfully reduces portfolio volatility by 11.7% while maintaining market-weight returns — but the unconstrained Sharpe maximisation degenerates to 100% NVDA, exposing the critical weakness of mean-variance optimisation: estimation error. Raw historical returns are a poor proxy for future expectations. Black-Litterman addresses this by anchoring to market equilibrium returns and blending in investor views with explicit confidence levels, producing more diversified and robust portfolios. The key finding: within a single correlated sector, the optimizer eliminates every asset that cannot justify its volatility with sufficient return. MSFT, AAPL, GOOGL, and NVDA survive because they occupy distinct positions on the return/risk spectrum. TSLA, META, and AMZN do not.
 
 ---
 
@@ -125,9 +125,9 @@ Multi-asset portfolio optimisation across 10 assets spanning equities, cryptocur
 | Target Return Optimised | ~$95,000 | 14.4% | GLD 67%, NVDA 18% |
 | Minimum Variance | ~$20,000 | 7.0% | TLT 42%, GLD 27%, SPY 25% |
 | Maximum Sharpe | ~$130,000 | — | GLD 60%, NVDA 29% |
-| Black-Litterman | ~$145,000 | 14.4% | NVDA 36%, AAPL 33%, BTC 11% |
+| Black-Litterman | ~$145,000 | 26.1% | NVDA 35%, AAPL 30%, BTC 9% |
 
-**Main takeaway:** Cross-asset diversification is fundamentally more powerful than sector diversification. Adding gold (GLD) and long-term Treasuries (TLT) — both with near-zero or negative correlations with equities — dropped the minimum variance portfolio volatility from 0.24 (Q3, Mag 7 only) to 0.07. The source of diversification matters more than the number of assets. Black-Litterman with investor views outperformed all methods (~$145k), confirming that quantitative optimisation combined with informed conviction produces better outcomes than either approach alone. Key lesson: bonds protect against recession-driven crashes but fail catastrophically during inflation — TLT lost value in 2022 while equities also fell, demonstrating that no asset is an unconditional safe haven.
+**Main takeaway:** Cross-asset diversification is fundamentally more powerful than sector diversification. Adding gold (GLD) and long-term Treasuries (TLT) — both with near-zero or negative correlations with equities — dropped the minimum variance portfolio volatility from 0.24 (Q3, Mag 7 only) to 0.07. The source of diversification matters more than the number of assets. Black-Litterman as standardly implemented proved structurally misaligned with mixed asset universes — its market cap equilibrium prior systematically suppresses GLD and TLT, reducing volatility improvement to ~0.5% after bug correction. A proper mixed asset BL implementation requires asset-class-specific priors. Key lesson: bonds protect against recession-driven crashes but fail catastrophically during inflation — TLT lost value in 2022 while equities also fell simultaneously, demonstrating that no asset is an unconditional safe haven.
 
 ---
 
