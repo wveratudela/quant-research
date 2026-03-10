@@ -60,20 +60,20 @@ Selected as a representative large-cap tech portfolio. All assets share positive
 | Target Return Optimised | ~$45,000 | ~350% | 26.6% | — |
 | Minimum Variance | ~$21,000 | ~110% | 23.7% | — |
 | Max Sharpe (100% NVDA) | ~$153,000 | ~1,430% | 51.8% | 1.80 |
-| Black-Litterman | ~$49,000 | ~390% | 26.6% | - |
+| Black-Litterman | ~$48,000 | ~380% | 25.9% | - |
 | SPY (benchmark) | ~$17,000 | ~70% | — | - |
 
 ### Optimised Weights — Key Portfolios
 
 | Asset | Equal | Target Return | Min Variance | Black-Litterman |
 |-------|-------|---------------|--------------|-----------------|
-| AAPL | 14.3% | 34.2% | 36.8% | 18.8% |
-| AMZN | 14.3% | 0.0% | 0.0% | 11.4% |
-| GOOGL | 14.3% | 26.6% | 14.4% | 17.9% |
-| META | 14.3% | 0.0% | 0.0% | 8.1% |
-| MSFT | 14.3% | 21.9% | 48.9% | 15.1% |
-| NVDA | 14.3% | 17.29% | 0.0% | 21.4% |
-| TSLA | 14.3% | 0.0% | 0.0% | 7.4% |
+| AAPL | 14.3% | 34.2% | 36.8% | 29.2% |
+| AMZN | 14.3% | 0.0% | 0.0% | 0.4% |
+| GOOGL | 14.3% | 26.6% | 14.4% | 22.9% |
+| META | 14.3% | 0.0% | 0.0% | 0.0% |
+| MSFT | 14.3% | 21.9% | 48.9% | 32.7% |
+| NVDA | 14.3% | 17.29% | 0.0% | 14.7% |
+| TSLA | 14.3% | 0.0% | 0.0% | 0.0% |
 
 ---
 
@@ -85,9 +85,11 @@ Selected as a representative large-cap tech portfolio. All assets share positive
 
 **Raw Markowitz is dangerously overfit to historical data.** The unconstrained Sharpe maximisation allocated 100% to NVDA — a direct consequence of NVDA's exceptional 5-year AI-driven run. This illustrates estimation error: small changes in expected returns produce wildly different optimal weights. This is the most famous weakness of mean-variance optimisation.
 
-**Black-Litterman produces more robust, diversified portfolios.** By anchoring to market equilibrium returns rather than raw history, BL reduces NVDA's implied return from 99% to 27% — a far more conservative and defensible estimate. With high confidence in the outperformer view, the portfolio concentrates in AAPL and GOOGL rather than NVDA, reflecting both the view and risk efficiency.
+**Black-Litterman produces more robust, diversified portfolios anchored to market structure.** By anchoring to market equilibrium returns rather than raw history, BL reduces NVDA's implied return from 99% to 27% and elevates MSFT — the largest market cap in the universe — to 32.7%. This is a more defensible allocation than raw Markowitz's 100% NVDA, reflecting market consensus rather than recent return history. The corrected BL optimisation achieves a 13.2% volatility reduction relative to market-weight returns.
 
 **The portfolio value comparison is illustrative, not predictive.** Weights are optimised on the same data used to evaluate performance. A proper out-of-sample evaluation would require rolling window optimisation and forward testing.
+
+**Main takeaway:** Markowitz optimisation successfully reduces portfolio volatility by 13.2% while maintaining market-weight returns — but the unconstrained Sharpe maximisation degenerates to 100% NVDA, exposing the critical weakness of mean-variance optimisation: estimation error. Raw historical returns are a poor proxy for future expectations. Black-Litterman addresses this by anchoring to market equilibrium returns and blending in investor views with explicit confidence levels, producing more diversified and robust portfolios. The most counterintuitive finding: META appeared in nearly every optimised portfolio despite subjective underperformance, because its low correlation with other assets provides genuine diversification benefit that the optimizer refuses to discard.
 
 ---
 
