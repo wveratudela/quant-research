@@ -7,7 +7,8 @@ import seaborn as sns
 
 def fetch_data(ticker, start, end):
 
-    df = yf.download(ticker, start=start, end=end, interval="1d", auto_adjust=False, progress=False)
+    df = yf.download(ticker, start=start, end=end, interval="1d", auto_adjust=True, progress=False)
+    # With auto_adjust=True, 'Close' is already adjusted
     df.columns = df.columns.get_level_values(0)
 
     df = df[['Close', 'Volume']]
@@ -17,12 +18,14 @@ def fetch_data(ticker, start, end):
 
 
 def fetch_portfolio_data(tickers, start, end):
-    raw = yf.download(tickers, start=start, end=end, 
-                      auto_adjust=False, progress=False)
+    raw = yf.download(tickers, start=start, end=end,
+                      auto_adjust=True, progress=False)
+    # With auto_adjust=True, 'Close' is already adjusted
     prices = raw['Close']
+    volumes = raw['Volume']
     prices = prices.ffill().dropna()
-    
-    return prices
+    volumes = volumes.ffill().dropna()
+    return prices, volumes
 
 
 def market_cap(tickers):

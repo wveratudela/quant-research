@@ -52,13 +52,13 @@ def run_backtest(df, starting_capital, tranche=False):
         if row['Golden_Cross']:
             if tranche:
                 shares = (cash/2) // price
+                in_gc_window = True
+                gc_day_counter = 0
             else:
                 shares = cash // price
             port_val = shares * price
             cash -= port_val
     
-            in_gc_window = True
-            gc_day_counter = 0
         
         if in_gc_window and tranche:
             gc_day_counter += 1
@@ -75,6 +75,7 @@ def run_backtest(df, starting_capital, tranche=False):
         if row['Death_Cross']:
             cash += shares * price
             shares = 0
+            shares2 = 0
             port_val = 0
             in_gc_window = False
             gc_day_counter = 0
