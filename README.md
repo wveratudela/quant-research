@@ -43,7 +43,12 @@ quant-research/
 │   ├── Q4_functions.py
 │   └── README.md
 │
-├── Q5_ml_signal_generation/         ← Coming soon
+├── Q5_ml_signal_generation/
+│   ├── Q5_notebook.ipynb
+│   ├── Q5_functions.py
+│   └── README.md
+│
+├── Q6_dynamic_rebalancing/          ← In progress
 │   └── ...
 │
 └── utils/
@@ -60,9 +65,8 @@ quant-research/
 | Q2 | Mean Reversion & Pairs Trading | ✅ Complete | Cointegration, z-score signals, spread trading |
 | Q3 | Multi-Asset Portfolio Optimisation | ✅ Complete | Markowitz, Sharpe maximisation, Magnificent 7 vs SPY |
 | Q4 | Mixed Asset Class Portfolio | ✅ Complete | Stocks + crypto + ETFs, rebalancing strategies |
-| Q5 | ML Signal Generation | 🔄 In progress | Feature engineering, classification, signal prediction |
-| Q6 | Lyapunov stability | 📋 Planned | Novel contribution |
-
+| Q5 | ML Signal Generation | ✅ Complete | Feature engineering, classification, signal prediction |
+| Q6 | Dynamic Portfolio Rebalancing | 🔄 In progress | Lyapunov stability theory, LQR control, regime-aware rebalancing |
 
 ---
 
@@ -131,8 +135,32 @@ Multi-asset portfolio optimisation across 10 assets spanning equities, cryptocur
 
 ---
 
+### Q5 — ML Signal Generation (AAPL, 10 years)
+ 
+Walk-forward ML signal generation testing the hypothesis that volume-confirmed features outperform price-only features. Three models compared against MA crossover baseline and buy-and-hold.
+ 
+| Strategy | Final Value ($10k) | Notes |
+|----------|-------------------|-------|
+| Price only (XGBoost) | ~$22,000 | Below MA crossover |
+| Price + Volume (XGBoost) | ~$30,000 | +36% vs price only |
+| Price + Volume + Cross-asset | ~$25,000 | Cross-asset hurt performance |
+| MA Crossover (Q1 baseline) | ~$41,000 | Simple beats complex |
+| Buy & Hold | ~$110,000 | Bull market dominates |
+ 
+**Main takeaway:** The volume hypothesis is confirmed — volume-confirmed features improve ML signal quality by 36% over price-only features, with Volume Ratio (VR) ranking as the single most important predictor above all price-based features. However, no ML model exceeded the 57.7% naive baseline accuracy, and all underperformed the simple MA crossover in backtested returns. For trending assets in sustained bull markets, momentum-following rules remain more effective than supervised classification. Cross-asset features diluted rather than improved signal quality — local volume information outperforms global macro context for single-asset prediction.
+ 
+---
+ 
+## Portfolio Positioning
+ 
+*"I design quantitative trading and portfolio systems that remain stable under market regime transitions."*
+ 
+Q1–Q2 establish signal generation and statistical arbitrage foundations. Q3–Q4 develop multi-asset portfolio optimisation with regime awareness. Q5 bridges classical signals and machine learning. Q6 applies control theory to dynamic rebalancing — the novel contribution bridging engineering and finance.
+ 
+---
+ 
 ## Tech Stack
-
+ 
 | Tool | Purpose |
 |------|---------|
 | Python 3.x | Core language |
@@ -141,10 +169,12 @@ Multi-asset portfolio optimisation across 10 assets spanning equities, cryptocur
 | yfinance | Market data retrieval |
 | matplotlib & seaborn | Visualisation |
 | statsmodels | Statistical tests (ADF, cointegration) |
-| scikit-learn | Regression (hedge ratio), ML (Q5, coming soon) |
-
+| scikit-learn | ML models, preprocessing, metrics |
+| xgboost | Gradient boosting classifier |
+| scipy | Portfolio optimisation (SLSQP) |
+ 
 ---
-
+ 
 ## Disclaimer
-
+ 
 This repository is for educational and research purposes only. Nothing here constitutes financial advice. All strategies are tested on historical data, and past performance does not guarantee future results.
