@@ -13,7 +13,7 @@ from xgboost import XGBClassifier
 
 
 
-def engineer_features(prices, volumes, TARGET):
+def engineer_features(prices, volumes, TARGET, fast=20, slow=50):
 
     features = pd.DataFrame(index=prices.index)
     
@@ -25,8 +25,8 @@ def engineer_features(prices, volumes, TARGET):
     mom_60 = np.log(prices / prices.shift(60))
     
     # MA20/MA50 ratio (are we in a golden cross regime?)
-    MAp_20 = prices.rolling(window=20).mean()
-    MAp_50 = prices.rolling(window=50).mean()
+    MAp_20 = prices.rolling(window=fast).mean()
+    MAp_50 = prices.rolling(window=slow).mean()
     MA_ratio = MAp_20 / MAp_50
     
     # SI-14 (overbought/oversold)
@@ -122,7 +122,7 @@ def engineer_features(prices, volumes, TARGET):
 
 
 
-def model_training(cols, df_sampled):
+def model_training(cols, df_sampled, LR = True, RF = True, XGB = True):
 
     # Walk-forward parameters
     min_train = 50        # minimum samples before first prediction
@@ -142,20 +142,29 @@ def model_training(cols, df_sampled):
         X_test_scaled = scaler.transform(X_test)
         
         # Logistic Regression
-        lr = LogisticRegression(class_weight='balanced', max_iter=1000)
-        lr.fit(X_train_scaled, y_train)
-        pred_lr = lr.predict(X_test_scaled)
-        
+        if LR:
+            lr = LogisticRegression(class_weight='balanced', max_iter=1000)
+            lr.fit(X_train_scaled, y_train)
+            pred_lr = lr.predict(X_test_scaled)
+        else:
+            pred_lr = [0]
+            
         # Random Forest
-        rf = RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42)
-        rf.fit(X_train_scaled, y_train)
-        pred_rf = rf.predict(X_test_scaled)
-    
+        if RF:
+            rf = RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42)
+            rf.fit(X_train_scaled, y_train)
+            pred_rf = rf.predict(X_test_scaled)
+        else:
+            pred_rf = [0]
+            
         # XGBoost
-        xgb = XGBClassifier(n_estimators=100, random_state=42, verbosity=0, eval_metric='logloss')
-        xgb.fit(X_train_scaled, y_train)
-        pred_xgb = xgb.predict(X_test_scaled)
-        
+        if XGB:
+            xgb = XGBClassifier(n_estimators=100, random_state=42, verbosity=0, eval_metric='logloss')
+            xgb.fit(X_train_scaled, y_train)
+            pred_xgb = xgb.predict(X_test_scaled)
+        else:
+            pred_xgb = [0]
+            
         results.append({
             'date': test.index[0],
             'actual': y_test.values[0],

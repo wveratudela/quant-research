@@ -5,7 +5,7 @@ import yfinance as yf
 import seaborn as sns
 
 
-def add_signals(df):
+def add_signals(df, fast=20, slow=50):
     
     df = df.copy()
     
@@ -14,8 +14,8 @@ def add_signals(df):
     df = df.dropna()
 
     # Calculate 20-day and 50-day rolling averages
-    df['MA20'] = df['Close'].rolling(window=20).mean()
-    df['MA50'] = df['Close'].rolling(window=50).mean()
+    df['MA20'] = df['Close'].rolling(window=fast).mean()
+    df['MA50'] = df['Close'].rolling(window=slow).mean()
     
     # Generate signals based on crossovers
     # Signal = 1 (long) when 20-day crosses above 50-day - Crossover UP
