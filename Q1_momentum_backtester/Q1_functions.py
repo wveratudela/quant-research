@@ -4,14 +4,25 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 import seaborn as sns
 
+import sys
+sys.path.append('../utils')   # path relative to the notebook
+from common import get_ma_windows, compute_vol_thresholds
 
-def add_signals(df, fast=20, slow=50):
+def add_signals(df, fast=20, slow=50, MA_windows=False, MA_assets=False):
     
     df = df.copy()
     
     df['Log_Returns'] = np.log(df['Close'] / df['Close'].shift(1))
     df['Daily_Return'] = df['Close'].pct_change()
     df = df.dropna()
+
+    if MA_windows:
+        current_sigma = df['Daily_Return'].std()
+        fast, slow = get_ma_windows(current_sigma, {"low":0.010, "medium":0.015, "high":0.025})
+
+    if MA_assets:
+        thr = compute_vol_thresholds(df['Log_Returns'])
+        fast, slow = get_ma_windows(thr["sigma"].iloc[-1], thr)
 
     # Calculate 20-day and 50-day rolling averages
     df['MA20'] = df['Close'].rolling(window=fast).mean()
@@ -205,14 +216,18 @@ def compute_metrics(df,starting_capital):
     return df, comparison_table, yearly_df
 
     
-def plot_performance(dA,dS,yA,yS):
+def plot_performance(dA,dS,yA,yS, monthly=False):
 
     plt.figure(figsize=(18, 6))
     colors = sns.color_palette("colorblind")
     
+    if monthly:
+        dA = dA.resample('ME').last()
+        dS = dS.resample('ME').last()
+
     plt.subplot(1, 3, 1)
     plt.title('Equity curve')
-    plt.plot(dA.index, dA['Total'], label='Total A', linewidth=1, color=colors[0])
+    plt.plot(dA.index, dA['Total'], label='Total A', linewidth=1.5, color=colors[0])
     plt.plot(dA.index, dA['Buy_Hold'], label='HODL A', linewidth=1, color=colors[1])
     plt.plot(dS.index, dS['Buy_Hold'], label='SPY', linewidth=0.5, color=colors[2])
     plt.grid(True, alpha=0.3)
@@ -222,7 +237,7 @@ def plot_performance(dA,dS,yA,yS):
     
     plt.subplot(1, 3, 2)
     plt.title('Drawdown chart')
-    plt.plot(dA.index, dA['Drawdown_BS'], label='Total A', linewidth=1, color=colors[0])
+    plt.plot(dA.index, dA['Drawdown_BS'], label='Total A', linewidth=1.5, color=colors[0])
     plt.plot(dA.index, dA['Drawdown_BH'], label='HODL A', linewidth=1, color=colors[1])
     plt.plot(dS.index, dS['Drawdown_BH'], label='SPY', linewidth=0.5, color=colors[2])
     plt.grid(True, alpha=0.3)
@@ -241,7 +256,7 @@ def plot_performance(dA,dS,yA,yS):
     plt.bar(x, yA['Annualized_BH'], width, label='HODL A', color=colors[1])
     plt.bar(x + width, yS['Annualized_BH'], width, label='SPY', color=colors[2])
     plt.axhline(y=0, color='black', linewidth=0.8, linestyle='--')
-    plt.xticks(x[::2], years[::2])             # replace numeric x with year labels, showing every second tick to avoid overlapping
+    plt.xticks(x[::1], years[::1])             # replace numeric x with year labels, showing every second tick to avoid overlapping
     plt.grid(axis='y', alpha=0.3)
     plt.xlabel('Year')
     plt.ylabel('Return')

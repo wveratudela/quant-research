@@ -49,3 +49,28 @@ def market_cap(tickers):
     market_caps_df = pd.DataFrame.from_dict(market_caps, orient="index", columns=["MarketCap"])
     
     return market_caps_df
+
+
+def compute_vol_thresholds(returns):
+    sigma = returns.rolling(252).std().dropna()
+    return {
+        "low":    sigma.quantile(0.25),
+        "medium": sigma.quantile(0.50),
+        "high":   sigma.quantile(0.90),
+        "sigma":  sigma
+    }
+
+
+def get_ma_windows(current_sigma, thresholds):
+    low    = thresholds["low"]
+    medium = thresholds["medium"]
+    high   = thresholds["high"]
+
+    if current_sigma > high:
+        return 10, 30
+    elif current_sigma > medium:
+        return 15, 40
+    elif current_sigma < low:
+        return 50, 200
+    else:
+        return 20, 50
