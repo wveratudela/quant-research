@@ -69,20 +69,26 @@ def frontier_optimizer(mu_annual, sigma_annual, cov_annual, target_returns):
     return frontier_volatilities, frontier_returns, frontier_weights
 
 
-def portfolio_value(initial_capital,df,w):
+def portfolio_value(mu, sigma, end, n_sims=10_000, Y=1):
 
-    # 1. Capital allocated per asset
-    capital_alloc = initial_capital * w
-    # 2. First-day prices
-    first_prices = df.iloc[0]
-    # 3. Integer number of shares
-    shares = np.floor(capital_alloc / first_prices)
-    # 4. Daily position values
-    position_values = df * shares
-    # 5. Portfolio value over time
-    portfolio_value = position_values.sum(axis=1)
+    sim_start = end
+    sim_end   = end + pd.DateOffset(years=Y)
+    dates = pd.bdate_range(start=sim_start.date(), end=sim_end.date(), freq="B")
 
-    return portfolio_value
+    dt = 1 / 252
+    trading_days = len(dates)
+    Z = np.random.normal(0, 1, size=(trading_days, n_sims))
+
+    mu_daily = (mu - 0.5 * sigma**2) * dt
+    sigma_daily = sigma * np.sqrt(dt)
+    daily_returns = np.exp(mu_daily + sigma_daily * Z)
+
+    paths = 100 * daily_returns.cumprod(axis=0)
+    paths = pd.DataFrame(paths)
+
+    paths.index = dates
+
+    return paths
 
     
 def max_sharpe(mu, cov, rf=0.04):

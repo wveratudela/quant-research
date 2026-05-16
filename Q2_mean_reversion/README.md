@@ -94,3 +94,9 @@ The strategy performs best in **volatile, mean-reverting markets** where the spr
 ```
 pandas, numpy, yfinance, matplotlib, seaborn, statsmodels, scikit-learn
 ```
+
+---
+
+## Disclaimer
+
+This framework is for educational and research purposes only. Past crisis performance does not predict future outcomes. No asset is an unconditional safe haven. All risk metrics (VaR, CVaR, tail contributions) are backward-looking estimates with substantial statistical uncertainty. Do not use this for live trading without independent validation, out-of-sample testing, and professional risk oversight.

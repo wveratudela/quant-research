@@ -143,3 +143,9 @@ This is testable, falsifiable, and directly comparable — the same model archit
 ```
 pandas, numpy, yfinance, matplotlib, seaborn, sklearn, xgboost
 ```
+
+---
+
+## Disclaimer
+
+This framework is for educational and research purposes only. Past crisis performance does not predict future outcomes. No asset is an unconditional safe haven. All risk metrics (VaR, CVaR, tail contributions) are backward-looking estimates with substantial statistical uncertainty. Do not use this for live trading without independent validation, out-of-sample testing, and professional risk oversight.
