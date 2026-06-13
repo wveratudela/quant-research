@@ -1,4 +1,4 @@
-# Q4t — Tail Risk & Stress Testing Framework
+# Q4 — Tail Risk & Stress Testing Framework
 
 A portfolio stress testing framework applying Monte Carlo simulation, historical crisis replay, and tail risk decomposition to a mixed-asset universe.
 

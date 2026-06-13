@@ -1,4 +1,4 @@
-# Q4 — Mixed Asset Class Portfolio Optimisation
+# Q3 — Mixed Asset Class Portfolio Optimisation
 
 A multi-asset portfolio optimisation framework extending Q3's Markowitz and Black-Litterman approach to a diversified universe spanning stocks, cryptocurrencies, and ETFs/bonds.
 
