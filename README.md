@@ -178,8 +178,8 @@ All projects implemented from first principles with strict walk-forward validati
 
 | Repo | Focus |
 |---|---|
-| [F — Financial Engineering](https://github.com/wveratudela/financial-engineering) | Derivatives pricing, Greeks, yield curve, volatility surface |
-
+| [Financial Engineering](https://github.com/wveratudela/financial-engineering) | Derivatives pricing, Greeks, yield curve, volatility surface |
+| [Mathematical Methods](https://github.com/wveratudela/mathematical-methods) | Control theory, Kalman filters, robust optimisation, Riemannian geometry applied to portfolio management |
 ---
 
 *Dr. Walter Vera-Tudela · [github.com/wveratudela](https://github.com/wveratudela)*
