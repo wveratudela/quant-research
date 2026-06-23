@@ -1,18 +1,21 @@
-Proprietary Research License  
-Copyright (c) 2026 W. Vera-Tudela. All rights reserved.
+Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
 
-Permission is granted to view this repository and to download and run the code
-solely for evaluation purposes (including personal learning and recruitment /
-interview evaluation).
+Copyright (c) 2026 W. Vera-Tudela
 
-No permission is granted to use this software for commercial purposes, to
-redistribute it, to publish it, or to create derivative works without prior
-written permission from the copyright holder.
+You are free to:
+  Share — copy and redistribute the material in any medium or format
+  Adapt — remix, transform, and build upon the material
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Under the following terms:
+  Attribution — You must give appropriate credit to the original author
+  (W. Vera-Tudela, github.com/wveratudela), provide a link to this license,
+  and indicate if changes were made.
+
+  NonCommercial — You may not use the material for commercial purposes.
+  This includes incorporation into products, services, or workflows intended
+  to generate revenue.
+
+No additional restrictions — You may not apply legal terms or technological
+measures that legally restrict others from doing anything the license permits.
+
+Full license text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
