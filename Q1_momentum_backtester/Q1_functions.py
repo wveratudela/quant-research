@@ -1,12 +1,10 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import yfinance as yf
 import seaborn as sns
 
 import sys
 sys.path.append('../utils')   # path relative to the notebook
-from common import get_ma_windows, compute_vol_thresholds
 
 def add_signals(df, fast=20, slow=50, MA_windows=False, MA_assets=False):
     
@@ -15,14 +13,6 @@ def add_signals(df, fast=20, slow=50, MA_windows=False, MA_assets=False):
     df['Log_Returns'] = np.log(df['Close'] / df['Close'].shift(1))
     df['Daily_Return'] = df['Close'].pct_change()
     df = df.dropna()
-
-    if MA_windows:
-        current_sigma = df['Daily_Return'].std()
-        fast, slow = get_ma_windows(current_sigma, {"low":0.010, "medium":0.015, "high":0.025})
-
-    if MA_assets:
-        thr = compute_vol_thresholds(df['Log_Returns'])
-        fast, slow = get_ma_windows(thr["sigma"].iloc[-1], thr)
 
     # Calculate 20-day and 50-day rolling averages
     df['MA20'] = df['Close'].rolling(window=fast).mean()
@@ -275,14 +265,10 @@ def compute_metrics(
     return df, comparison_table, yearly_df
 
     
-def plot_performance(dA, dS, yA, yS, monthly=False):
+def plot_performance(dA, dS, yA, yS):
 
     plt.figure(figsize=(18, 6))
     colors = sns.color_palette("colorblind")
-
-    if monthly:
-        dA = dA.resample("ME").last()
-        dS = dS.resample("ME").last()
 
     # ---------------------------------------------------------
     # Equity curve

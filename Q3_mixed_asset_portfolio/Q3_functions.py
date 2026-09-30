@@ -1,9 +1,7 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import yfinance as yf
-import seaborn as sns
 from scipy.optimize import minimize
+
 
 
 def portfolio_return(w, mu):
@@ -71,28 +69,6 @@ def frontier_optimizer(
         frontier_returns,
         frontier_weights,
     )
-
-
-def portfolio_value(mu, sigma, end, n_sims=10_000, Y=1):
-
-    sim_start = end
-    sim_end   = end + pd.DateOffset(years=Y)
-    dates = pd.bdate_range(start=sim_start.date(), end=sim_end.date(), freq="B")
-
-    dt = 1 / 252
-    trading_days = len(dates)
-    Z = np.random.normal(0, 1, size=(trading_days, n_sims))
-
-    mu_daily = (mu - 0.5 * sigma**2) * dt
-    sigma_daily = sigma * np.sqrt(dt)
-    daily_returns = np.exp(mu_daily + sigma_daily * Z)
-
-    paths = 100 * daily_returns.cumprod(axis=0)
-    paths = pd.DataFrame(paths)
-
-    paths.index = dates
-
-    return paths
 
     
 def max_sharpe(mu, cov, rf=0.04):

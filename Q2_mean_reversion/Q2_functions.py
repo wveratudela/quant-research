@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import yfinance as yf
 import seaborn as sns
 from statsmodels.tsa.stattools import adfuller, coint
 from sklearn.linear_model import LinearRegression
@@ -19,7 +18,7 @@ def check_data(df1, df2):
     if result[1] < 0.05:
         print(f"- - - - - WARNING: p-value: {result[1]:.4f} < 5% - - - - -")
     
-    score, p_value, critical_values = coint(df1['Close'], df2['Close'])
+    _, p_value, critical_values = coint(df1['Close'], df2['Close'])
     print(f"Cointegration p-value: {p_value:.4f}")
     if p_value > 0.05:
         print(f"- - - - - WARNING: p-value: {p_value:.4f} > 5% - - - - -")

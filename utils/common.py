@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import yfinance as yf
-import seaborn as sns
+
 
 
 def fetch_data(ticker, start, end):
@@ -34,86 +33,6 @@ def fetch_portfolio_data(tickers, start, end):
     prices = prices.ffill().dropna()
     volumes = volumes.ffill().dropna()
     return prices, volumes
-
-
-def market_cap(tickers):
-
-    market_caps = {}
-    
-    for t in tickers:
-        info = yf.Ticker(t).info
-        
-        mc = info.get("marketCap")
-        if mc is None:
-            mc = info.get("totalAssets")     # ETFs
-        if mc is None:
-            supply = info.get("circulatingSupply")
-            price = info.get("currentPrice") or info.get("regularMarketPrice")
-            if supply and price:
-                mc = supply * price       # crypto fallback
-        
-        market_caps[t] = mc
-    
-    market_caps_df = pd.DataFrame.from_dict(market_caps, orient="index", columns=["MarketCap"])
-    
-    return market_caps_df
-
-
-def compute_vol_thresholds(returns):
-    sigma = returns.rolling(252).std().dropna()
-    return {
-        "low":    sigma.quantile(0.25),
-        "medium": sigma.quantile(0.50),
-        "high":   sigma.quantile(0.90),
-        "sigma":  sigma
-    }
-
-
-def get_ma_windows(current_sigma, thresholds):
-    low    = thresholds["low"]
-    medium = thresholds["medium"]
-    high   = thresholds["high"]
-
-    if current_sigma > high:
-        return 10, 30
-    elif current_sigma > medium:
-        return 15, 40
-    elif current_sigma < low:
-        return 50, 200
-    else:
-        return 20, 50
-
-
-def asset_size(tickers):
-
-    asset_sizes = {}
-
-    for ticker in tickers:
-
-        info = yf.Ticker(ticker).info
-
-        size = info.get("marketCap")
-
-        if size is None:
-            size = info.get("totalAssets")
-
-        if size is None:
-            supply = info.get("circulatingSupply")
-            price = (
-                info.get("currentPrice")
-                or info.get("regularMarketPrice")
-            )
-
-            if supply is not None and price is not None:
-                size = supply * price
-
-        asset_sizes[ticker] = size
-
-    return pd.DataFrame.from_dict(
-        asset_sizes,
-        orient="index",
-        columns=["Size"],
-    )
 
 
 def return_statistics(df, trading_days=252):

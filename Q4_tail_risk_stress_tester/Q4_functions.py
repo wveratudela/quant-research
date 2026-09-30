@@ -1,11 +1,14 @@
 import numpy as np
 
 
+
 def format_weight(x):
     return "-" if np.isclose(x, 0.0) else f"{x:.1%}"
 
+
 def format_tail(x):
     return "-" if np.isclose(x, 0.0) else f"{x:.2f}"
+
 
 def forward_returns(
     mu,
@@ -88,14 +91,12 @@ def historical_returns(data, event):
     return crisis_returns
 
 
-
 def loss_calculator(returns, base, portfolio_value):
 
     loss_pct = - (returns - base)
     loss_pnl = portfolio_value * loss_pct
 
     return loss_pct, loss_pnl
-
 
 
 def losses_var_es(losses_pnl, losses_pct, CI=95):
@@ -110,8 +111,9 @@ def losses_var_es(losses_pnl, losses_pct, CI=95):
 
 
 def tail_risk_contribution(hist_returns, weights, tail_fraction=0.10):
+
     asset_growth = (1 + hist_returns).cumprod()
-    portfolio_growth = (1 + hist_returns @ weights).cumprod()
+    portfolio_growth = asset_growth @ weights
 
     cutoff = portfolio_growth.quantile(tail_fraction)
     tail_mask = portfolio_growth <= cutoff
