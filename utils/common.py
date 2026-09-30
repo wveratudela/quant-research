@@ -7,12 +7,20 @@ import seaborn as sns
 
 def fetch_data(ticker, start, end):
 
-    df = yf.download(ticker, start=start, end=end, interval="1d", auto_adjust=True, progress=False)
-    # With auto_adjust=True, 'Close' is already adjusted
-    df.columns = df.columns.get_level_values(0)
+    df = yf.download(
+        ticker,
+        start=start,
+        end=end,
+        interval="1d",
+        auto_adjust=True,
+        progress=False,
+    )
 
-    df = df[['Close', 'Volume']]
-    df = df.ffill()
+    df.columns = df.columns.get_level_values(0)
+    df.columns.name = None
+
+    df = df[["Close", "Volume"]].copy()
+    df = df.dropna(subset=["Close"])
 
     return df
 
@@ -74,3 +82,46 @@ def get_ma_windows(current_sigma, thresholds):
         return 50, 200
     else:
         return 20, 50
+
+
+def asset_size(tickers):
+
+    asset_sizes = {}
+
+    for ticker in tickers:
+
+        info = yf.Ticker(ticker).info
+
+        size = info.get("marketCap")
+
+        if size is None:
+            size = info.get("totalAssets")
+
+        if size is None:
+            supply = info.get("circulatingSupply")
+            price = (
+                info.get("currentPrice")
+                or info.get("regularMarketPrice")
+            )
+
+            if supply is not None and price is not None:
+                size = supply * price
+
+        asset_sizes[ticker] = size
+
+    return pd.DataFrame.from_dict(
+        asset_sizes,
+        orient="index",
+        columns=["Size"],
+    )
+
+
+def return_statistics(df, trading_days=252):
+    returns = df.pct_change().dropna()
+
+    mu_annual = returns.mean() * trading_days
+    sigma_annual = returns.std() * np.sqrt(trading_days)
+    cov_annual = returns.cov() * trading_days
+    corr_matrix = returns.corr()
+
+    return returns, mu_annual, sigma_annual, cov_annual, corr_matrix

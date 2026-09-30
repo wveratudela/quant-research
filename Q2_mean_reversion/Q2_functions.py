@@ -10,12 +10,12 @@ from sklearn.linear_model import LinearRegression
 def check_data(df1, df2):
 
     result = adfuller(df1['Close'])
-    print(f"V ADF: {result[0]:.4f}, p-value: {result[1]:.4f}")
+    print(f"KO ADF: {result[0]:.4f}, p-value: {result[1]:.4f}")
     if result[1] < 0.05:
         print(f"- - - - - WARNING: p-value: {result[1]:.4f} < 5% - - - - -")
     
     result = adfuller(df2['Close'])
-    print(f"MA ADF: {result[0]:.4f}, p-value: {result[1]:.4f}")
+    print(f"PEP ADF: {result[0]:.4f}, p-value: {result[1]:.4f}")
     if result[1] < 0.05:
         print(f"- - - - - WARNING: p-value: {result[1]:.4f} < 5% - - - - -")
     
@@ -26,321 +26,526 @@ def check_data(df1, df2):
     print(f"Critical values: {critical_values}")
     
 
-def check_signals(df1, df2):
+def estimate_hedge_ratio(df1, df2):
+    """
+    Estimate a static OLS hedge ratio using formation-period data.
 
-    # Regress V on MA
-    X = df2['Close'].values.reshape(-1, 1)
-    y = df1['Close'].values
-    
+    Models:
+        df1['Close'] = alpha + beta * df2['Close'] + error
+
+    Returns
+    -------
+    beta : float
+        Estimated hedge ratio.
+    """
+
+    X = df2["Close"].to_numpy().reshape(-1, 1)
+    y = df1["Close"].to_numpy()
+
     model = LinearRegression().fit(X, y)
-    beta = model.coef_[0]
-    print(f"Hedge ratio β: {beta:.4f}")
-    
-    r2 = model.score(X, y)
-    print(f"R²: {r2:.4f}")
-    if r2 < 0.95:
-        print(f"- - - - - WARNING: p-value: {p_value:.4f} < 95% - - - - -")
 
-    x_line = np.linspace(X.min(), X.max(), 200).reshape(-1, 1)
-    y_line = model.predict(x_line)
-    
-    spread = df1['Close'] - beta * df2['Close']
-
-    print(f"Spread mean: {spread.mean():.4f}")
-    print(f"Spread std: {spread.std():.4f}")
+    return model.coef_[0]
 
 
-    # Visualize the signals to check for correlation and spread
-    plt.figure(figsize=(18, 6))
-    colors = sns.color_palette("colorblind")
-    
-    plt.subplot(1, 2, 1)
-    plt.scatter(X, y, color=colors[0], label='Prices')      # Scatter of original data
-    plt.plot(x_line, y_line, color='k', linewidth=2, label='Fit',linestyle='--')      # Regression line
-    plt.title('MA & V correlation of values')
-    plt.xlabel('MA')
-    plt.ylabel('V')
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    
-    plt.subplot(1, 2, 2)
-    plt.plot(spread, linewidth=1)
-    plt.axhline(spread.mean(), color='black', linewidth=0.8, linestyle='--', alpha=0.75, label='Mean')
-    plt.axhline(spread.mean()+spread.std(), color='black', linewidth=1, linestyle='--', alpha=0.5, label='+1 std', )
-    plt.axhline(spread.mean()-spread.std(), color='black', linewidth=1, linestyle='--', alpha=0.5, label='-1 std')
-    plt.title('V - 0.55 × MA Spread')
-    plt.xlabel('Year')
-    plt.ylabel('Spread')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
+def build_pairs_signal(
+    df1,
+    df2,
+    beta,
+    evaluation_start=None,
+    mean_window=252,
+    std_window=60,
+    entry_z=2.0,
+):
 
-    plt.show()
+    df1 = df1.copy()
+    df2 = df2.copy()
 
-    
-    rolling_mean = spread.rolling(window=252).mean()
-    rolling_std = spread.rolling(window=60).std()
-    z_score = (spread - rolling_mean) / rolling_std
-    
-    s = z_score
-    signal = pd.Series(0, index=s.index)
-    
+    # Construct spread using the hedge ratio
+    # estimated from the formation period
+    spread = (
+        df1["Close"]
+        - beta * df2["Close"]
+    )
+
+    # Rolling z-score
+    rolling_mean = (
+        spread
+        .rolling(mean_window)
+        .mean()
+    )
+
+    rolling_std = (
+        spread
+        .rolling(std_window)
+        .std()
+    )
+
+    z_score = (
+        (spread - rolling_mean)
+        / rolling_std
+    )
+
+    # Restrict signal generation to the evaluation period,
+    # while preserving earlier observations for rolling warm-up
+    if evaluation_start is not None:
+        z_trade = z_score.loc[
+            z_score.index >= evaluation_start
+        ].copy()
+    else:
+        z_trade = z_score.copy()
+
+    # State:
+    #  0 = no position
+    # +1 = short spread:
+    #      short df1, long beta * df2
+    # -1 = long spread:
+    #      long df1, short beta * df2
+    signal = pd.Series(
+        0,
+        index=z_trade.index,
+        dtype=int,
+    )
+
     state = 0
-    
-    for i in range(1, len(s)):
+
+    for i in range(len(z_trade)):
+
+        z = z_trade.iloc[i]
+
+        if pd.isna(z):
+            signal.iloc[i] = state
+            continue
+
         if state == 0:
-            if s.iloc[i] > 2:
+
+            if z > entry_z:
                 state = 1
-            elif s.iloc[i] < -2:
+
+            elif z < -entry_z:
                 state = -1
-    
-        elif state == 1 and s.iloc[i] < 0:
+
+        elif state == 1 and z < 0:
             state = 0
-    
-        elif state == -1 and s.iloc[i] > 0:
+
+        elif state == -1 and z > 0:
             state = 0
-    
+
         signal.iloc[i] = state
-    
-    plt.figure(figsize=(18, 6))
-    colors = sns.color_palette("colorblind")
-
-    plt.subplot(1, 2, 1)
-    plt.plot(z_score, linewidth=1, label='Z-score')
-    plt.axhline(2, color='red', linestyle='--', linewidth=1, label='+2')
-    plt.axhline(-2, color='green', linestyle='--', linewidth=1, label='-2')
-    plt.axhline(0, color='black', linestyle='--', linewidth=0.8)
-    plt.title('Z-score of V/MA Spread (60d std, 252d mean)')
-    plt.xlabel('Year')
-    plt.ylabel('z-score')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-
-    plt.subplot(1, 2, 2)
-    plt.plot(signal)    
-    plt.title('Long/Short signal (1 = Long MA/Short V. -1 = Long V/Short MA)')
-    plt.xlabel('Year')
-    plt.ylabel('Signal')
-    plt.grid(True, alpha=0.3)
-    plt.show()
 
     return signal
 
 
-def run_pairs_trading(df1, df2, signal, starting_capital):
+def run_pairs_trading(
+    df1,
+    df2,
+    signal,
+    beta,
+    starting_capital,
+    gross_leverage=1.0,
+):
+    """
+    Backtest a static-beta pairs strategy.
 
-    cash = starting_capital
-    port_val = 0
-    long_shares = 0
-    short_shares = 0
-    short_proceeds = 0
-    long_leg = 0
-    short_leg = 0
-    
-    index = np.arange(len(signal))   # or use your real index
-    df = pd.DataFrame({'Signal': signal}, index=df1.index)
-    df.index = pd.to_datetime(df.index)
-    
-    long_shares_list = []
-    short_shares_list = []
-    long_leg_list = []
-    short_leg_list = []
-    port_val_list = []
+    Signal convention
+    -----------------
+     0 : flat
+    +1 : short spread  -> short df1, long beta * df2
+    -1 : long spread   -> long df1, short beta * df2
+
+    Signals formed at close t are executed at close t+1.
+
+    gross_leverage = 1.0 means gross exposure equals current equity
+    whenever a new position is opened.
+    """
+
+    df1 = df1.copy()
+    df2 = df2.copy()
+
+    df = pd.DataFrame(index=df1.index)
+    df["Signal"] = signal
+
+    cash = float(starting_capital)
+
+    q1 = 0.0
+    q2 = 0.0
+    current_state = 0
+
     cash_list = []
-    
-    for i in range(len(signal)):
-        sig = signal.iloc[i]
-        price_1 = df1['Close'].iloc[i]
-        price_2 = df2['Close'].iloc[i]
-        
-        if sig == 1 and signal.iloc[i-1] == 0: # long_spread
-            long_shares = (cash/2) // price_2
-            short_shares = (cash/2) // price_1
-    
-            long_leg = long_shares * price_2
-            short_proceeds = short_shares * price_1
-           
-            cash -= long_leg
-            cash += short_proceeds
-            port_val = long_leg + short_proceeds
-    
-        elif sig == 0 and signal.iloc[i-1] == 1: # none - reset
-            long_leg = long_shares * price_2
-            short_leg = short_shares * price_1
-    
-            cash += long_leg
-            cash -= short_leg
-            
-            long_shares = 0
-            short_shares = 0
-            short_proceeds = 0
-            port_val = 0
-    
-        elif sig == -1 and signal.iloc[i-1] == 0: # long_spread
-            long_shares = (cash/2) // price_1
-            short_shares = (cash/2) // price_2
-    
-            long_leg = long_shares * price_1
-            short_proceeds = short_shares * price_2
-            
-            cash -= long_leg
-            cash += short_proceeds
-            port_val = long_leg + short_proceeds
-    
-        elif sig == 0 and signal.iloc[i-1] == -1: # none - reset
-            long_leg = long_shares * price_1
-            short_leg = short_shares * price_2
-    
-            cash += long_leg
-            cash -= short_leg
-            
-            long_shares = 0
-            short_shares = 0
-            short_proceeds = 0
-            port_val = 0
-    
-        if sig == 1 and signal.iloc[i-1] == 1:  # holding: long MA, short V
-            long_leg = long_shares * price_2
-            short_leg = short_proceeds - short_shares * price_1
-            port_val = long_leg + short_leg
-    
-        elif sig == -1 and signal.iloc[i-1] == -1:  # holding: long V, short MA
-            long_leg = long_shares * price_1
-            short_leg = short_proceeds - short_shares * price_2
-            port_val = long_leg + short_leg
-        else:
-            port_val = 0
-    
-        
-        long_shares_list.append(long_shares)
-        short_shares_list.append(short_shares)
-        long_leg_list.append(long_leg)
-        short_leg_list.append(short_leg)
-        port_val_list.append(port_val)
+    q1_list = []
+    q2_list = []
+    value1_list = []
+    value2_list = []
+    gross_list = []
+    total_list = []
+
+    for i in range(len(df)):
+
+        price1 = df1["Close"].iloc[i]
+        price2 = df2["Close"].iloc[i]
+
+        # Signal observed yesterday is executed today
+        target_state = (
+            int(signal.iloc[i - 1])
+            if i > 0
+            else 0
+        )
+
+        # Rebalance only when the trading state changes
+        if target_state != current_state:
+
+            # Close existing positions
+            if current_state != 0:
+                cash += q1 * price1
+                cash += q2 * price2
+
+                q1 = 0.0
+                q2 = 0.0
+
+            # Open new spread position
+            if target_state != 0:
+
+                current_equity = cash
+
+                gross_budget = (
+                    current_equity * gross_leverage
+                )
+
+                k = gross_budget / (
+                    price1 + abs(beta) * price2
+                )
+
+                if target_state == -1:
+                    # Long spread:
+                    # +V - beta*MA
+                    q1 = k
+                    q2 = -beta * k
+
+                elif target_state == 1:
+                    # Short spread:
+                    # -V + beta*MA
+                    q1 = -k
+                    q2 = beta * k
+
+                # Trading cash flow:
+                # buying reduces cash,
+                # short selling increases cash
+                cash -= q1 * price1
+                cash -= q2 * price2
+
+            current_state = target_state
+
+        # Mark positions to today's close
+        value1 = q1 * price1
+        value2 = q2 * price2
+
+        total = cash + value1 + value2
+
+        gross_exposure = (
+            abs(value1) + abs(value2)
+        )
+
         cash_list.append(cash)
-    
-    
-    df['Long_Shares'] = long_shares_list
-    df['Short_Shares'] = short_shares_list
-    df['Long_Leg'] = long_leg_list
-    df['Short_Leg'] = short_leg_list
-    df['Portfolio_Value'] = port_val_list
-    df['Cash'] = cash_list
-    df['Total'] = df['Cash'] + df['Portfolio_Value']
+        q1_list.append(q1)
+        q2_list.append(q2)
+        value1_list.append(value1)
+        value2_list.append(value2)
+        gross_list.append(gross_exposure)
+        total_list.append(total)
+
+    df["KO_Shares"] = q1_list
+    df["PEP_Shares"] = q2_list
+
+    df["KO_Value"] = value1_list
+    df["PEP_Value"] = value2_list
+
+    df["Gross_Exposure"] = gross_list
+    df["Cash"] = cash_list
+    df["Total"] = total_list
 
     return df
   
     
-def compute_metrics(df,starting_capital):
+def compute_metrics(
+    df,
+    starting_capital,
+    risk_free_rate=0.04,
+):
 
     df = df.copy()
 
-    if 'Close' in df.columns:
-        df['Buy_Hold'] = (starting_capital / df['Close'].iloc[0]) * df['Close']
-    else:
-        df['Buy_Hold'] = df['Cash']
-        
     trading_days = 252
-    risk_free_rate = 4/100
-    rf_daily = risk_free_rate / trading_days
-    years = (df.index[-1] - df.index[0]).days / 365.25
-    
-    #Buy Hold
-    Total_return = (df.iloc[-1]['Buy_Hold']-starting_capital)/starting_capital
-    
-    tot_log_returns = np.log(df['Buy_Hold'] / df['Buy_Hold'].shift(1))
-    excess_return = tot_log_returns - rf_daily
-    mu = excess_return.mean()
-    sigma = excess_return.std()
-    Sharpe_ratio = (mu / sigma) * np.sqrt(trading_days)
-    
-    df['Running_Max'] = df['Buy_Hold'].cummax()
-    df['Drawdown'] = df['Buy_Hold'] / df['Running_Max'] - 1
-    Maximum_drawdown = df['Drawdown'].min()
 
-    start_val = df['Buy_Hold'].iloc[0]
-    end_val   = df['Buy_Hold'].iloc[-1]
-    CAGR = (end_val / start_val) ** (1 / years) - 1
-    
-    Calmar = CAGR / Maximum_drawdown
+    # Select the relevant equity series
+    if "Close" in df.columns:
+        df["Buy_Hold"] = (
+            starting_capital
+            / df["Close"].iloc[0]
+        ) * df["Close"]
 
-    df['Year'] = df.index.year
-    yearly_start = df.groupby('Year')['Buy_Hold'].first()
-    yearly_end   = df.groupby('Year')['Buy_Hold'].last()
-    days = df.groupby('Year').apply(lambda x: (x.index[-1] - x.index[0]).days,
-    include_groups=False)
-    annualized = (yearly_end / yearly_start) ** (365.25 / days) - 1
+        equity_col = "Buy_Hold"
+        strategy_name = "Buy Hold"
+
+    elif "Total" in df.columns:
+        equity_col = "Total"
+        strategy_name = "Pairs"
+
+    else:
+        raise ValueError(
+            "DataFrame must contain either "
+            "'Close' or 'Total'."
+        )
+
+    equity = df[equity_col]
+
+    # Daily simple returns
+    df["Return"] = equity.pct_change()
+
+    # Risk-free rate converted from annual to daily
+    rf_daily = (
+        (1 + risk_free_rate) ** (1 / trading_days)
+        - 1
+    )
+
+    excess_returns = df["Return"] - rf_daily
+
+    # Total return
+    total_return = (
+        equity.iloc[-1] / equity.iloc[0]
+        - 1
+    )
+
+    # CAGR
+    years = (
+        (df.index[-1] - df.index[0]).days
+        / 365.25
+    )
+
+    cagr = (
+        (equity.iloc[-1] / equity.iloc[0])
+        ** (1 / years)
+        - 1
+    )
+
+    # Sharpe ratio
+    sharpe = (
+        excess_returns.mean()
+        / excess_returns.std()
+        * np.sqrt(trading_days)
+    )
+
+    # Drawdown
+    df["Running_Max"] = equity.cummax()
+
+    df["Drawdown"] = (
+        equity / df["Running_Max"]
+        - 1
+    )
+
+    max_drawdown = df["Drawdown"].min()
+
+    # Calmar ratio
+    calmar = (
+        cagr / abs(max_drawdown)
+        if max_drawdown != 0
+        else np.nan
+    )
+
+    # Calendar-year returns
+    yearly_returns = (
+        (1 + df["Return"])
+        .groupby(df.index.year)
+        .prod()
+        - 1
+    )
 
     yearly_df = pd.DataFrame({
-    'Start': yearly_start,
-    'End': yearly_end,
-    'Days': days,
-    'Annualized': annualized
+        "Return": yearly_returns,
     })
 
-    if 'Close' in df.columns:
-        data = {
-        'Buy Hold': [Total_return, Sharpe_ratio, Maximum_drawdown, CAGR, Calmar]
-        }
-    else:
-        data = {
-        'Pairs': [Total_return, Sharpe_ratio, Maximum_drawdown, CAGR, Calmar]
-        }    
-    
-    
-    index = ['Total Return', 'Sharpe', 'Max Drawdown', 'CAGR', 'Calmar']
-    
-    comparison_table = pd.DataFrame(data, index=index)
+    # Summary table
+    comparison_table = pd.DataFrame(
+        {
+            strategy_name: [
+                total_return,
+                cagr,
+                sharpe,
+                max_drawdown,
+                calmar,
+            ]
+        },
+        index=[
+            "Total Return",
+            "CAGR",
+            "Sharpe",
+            "Max Drawdown",
+            "Calmar",
+        ],
+    )
 
     return df, comparison_table, yearly_df
 
     
-def plot_performance(dataV,dataM,dataS,dataP,yV,yM,yS,yP):
+def plot_performance(
+    dataKO,
+    dataPEP,
+    dataSPY,
+    dataPairs,
+    yKO,
+    yPEP,
+    ySPY,
+    yPairs,
+):
 
     plt.figure(figsize=(18, 6))
     colors = sns.color_palette("colorblind")
-    
+
+    # Equity curves
     plt.subplot(1, 3, 1)
-    plt.title('Equity curve')
-    plt.plot(dataV.index, dataV['Buy_Hold'], color=colors[0], label='Buy_Hold V', linewidth=1)
-    plt.plot(dataM.index, dataM['Buy_Hold'], color=colors[1], label='Buy_Hold MA', linewidth=1)
-    plt.plot(dataS.index, dataS['Buy_Hold'], color=colors[2], label='Buy_Hold SPY', linewidth=1)    
-    plt.plot(dataS.index, dataP['Total'], color='k', label='Pairs V/MA', linewidth=1.5)    
+    plt.title("Equity Curve")
+
+    plt.plot(
+        dataKO.index,
+        dataKO["Buy_Hold"] / dataKO["Buy_Hold"].iloc[0],
+        color=colors[0],
+        label="KO",
+        linewidth=1,
+    )
+
+    plt.plot(
+        dataPEP.index,
+        dataPEP["Buy_Hold"] / dataPEP["Buy_Hold"].iloc[0],
+        color=colors[1],
+        label="PEP",
+        linewidth=1,
+    )
+
+    plt.plot(
+        dataSPY.index,
+        dataSPY["Buy_Hold"] / dataSPY["Buy_Hold"].iloc[0],
+        color=colors[2],
+        label="SPY",
+        linewidth=1,
+    )
+
+    plt.plot(
+        dataPairs.index,
+        dataPairs["Total"] / dataPairs["Total"].iloc[0],
+        color="k",
+        label="Pairs",
+        linewidth=1.5,
+    )
+
+    plt.axhline(
+        1.0,
+        color="black",
+        linewidth=0.8,
+        linestyle="--",
+    )
 
     plt.grid(True, alpha=0.3)
-    plt.xlabel('Date')
-    plt.ylabel('Value')
+    plt.xlabel("Date")
+    plt.ylabel("Wealth Multiple")
     plt.legend()
-    
+
+
+    # Drawdowns
     plt.subplot(1, 3, 2)
-    plt.title('Drawdown chart')
-    plt.plot(dataV.index, dataV['Drawdown'], color=colors[0], label='Buy_Hold V', linewidth=1)
-    plt.plot(dataM.index, dataM['Drawdown'], color=colors[1], label='Buy_Hold MA', linewidth=1)
-    plt.plot(dataS.index, dataS['Drawdown'], color=colors[2], label='Buy_Hold SPY', linewidth=1)    
-    plt.plot(dataS.index, dataP['Drawdown'], color='k', label='Pairs V/MA', linewidth=1.5)    
+    plt.title("Drawdown")
+
+    plt.plot(
+        dataKO.index,
+        dataKO["Drawdown"],
+        color=colors[0],
+        label="KO",
+        linewidth=1,
+    )
+
+    plt.plot(
+        dataPEP.index,
+        dataPEP["Drawdown"],
+        color=colors[1],
+        label="PEP",
+        linewidth=1,
+    )
+
+    plt.plot(
+        dataSPY.index,
+        dataSPY["Drawdown"],
+        color=colors[2],
+        label="SPY",
+        linewidth=1,
+    )
+
+    plt.plot(
+        dataPairs.index,
+        dataPairs["Drawdown"],
+        color="k",
+        label="Pairs",
+        linewidth=1.5,
+    )
 
     plt.grid(True, alpha=0.3)
-    plt.xlabel('Date')
-    plt.ylabel('Drawdown')
+    plt.xlabel("Date")
+    plt.ylabel("Drawdown")
     plt.legend()
-    
+
+
+    # Calendar-year returns
     plt.subplot(1, 3, 3)
-    plt.title('Annual returns bar chart')
-    
-    years = yP.index
+    plt.title("Calendar-Year Returns")
+
+    years = yPairs.index
     x = np.arange(len(years))
     width = 0.2
-    
-    plt.bar(x - 1.5*width, yV['Annualized'], width, label='V', color=colors[0])
-    plt.bar(x - 0.5*width, yM['Annualized'], width, label='MA', color=colors[1])
-    plt.bar(x + 0.5*width, yS['Annualized'], width, label='SPY', color=colors[2])
-    plt.bar(x + 1.5*width, yP['Annualized'], width, label='Pairs', color='k')
-    plt.axhline(y=0, color='black', linewidth=0.8, linestyle='--')
-    plt.xticks(x[::2], years[::2])             # replace numeric x with year labels, showing every second tick to avoid overlapping
-    plt.grid(axis='y', alpha=0.3)
-    plt.xlabel('Year')
-    plt.ylabel('Return')
-    
+
+    plt.bar(
+        x - 1.5 * width,
+        yKO.loc[years, "Return"],
+        width,
+        label="KO",
+        color=colors[0],
+    )
+
+    plt.bar(
+        x - 0.5 * width,
+        yPEP.loc[years, "Return"],
+        width,
+        label="PEP",
+        color=colors[1],
+    )
+
+    plt.bar(
+        x + 0.5 * width,
+        ySPY.loc[years, "Return"],
+        width,
+        label="SPY",
+        color=colors[2],
+    )
+
+    plt.bar(
+        x + 1.5 * width,
+        yPairs.loc[years, "Return"],
+        width,
+        label="Pairs",
+        color="k",
+    )
+
+    plt.axhline(
+        0,
+        color="black",
+        linewidth=0.8,
+        linestyle="--",
+    )
+
+    plt.xticks(
+        x[::2],
+        years[::2],
+    )
+
+    plt.grid(axis="y", alpha=0.3)
+    plt.xlabel("Year")
+    plt.ylabel("Return")
     plt.legend()
-    
+
     plt.tight_layout()
     plt.show()

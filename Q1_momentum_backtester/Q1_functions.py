@@ -40,228 +40,369 @@ def add_signals(df, fast=20, slow=50, MA_windows=False, MA_assets=False):
     return df
 
 
-def run_backtest(df, starting_capital, tranche=False):
+def run_backtest(df, starting_capital, initial_long=False):
 
     df = df.copy()
-    
-    # Create a column for the current day's relationship between MA20 and MA50
-    df['Cash'] = 0.0
-    df['Portfolio_Value'] = 0.0
-    df['Shares'] = 0.0
-    
-    cash = starting_capital
-    shares = 0.0
-    shares2 = 0.0
-    
-    in_gc_window = False
-    gc_day_counter = 0
-    
-    for idx, row in df.iterrows():
-        price = row['Close']
-        port_val = shares * price
-        
-        if row['Golden_Cross']:
-            if tranche:
-                shares = (cash/2) // price
-                in_gc_window = True
-                gc_day_counter = 0
-            else:
-                shares = cash // price
-            port_val = shares * price
-            cash -= port_val
-    
-        
-        if in_gc_window and tranche:
-            gc_day_counter += 1
-            if gc_day_counter == 10:
-                if price > row['MA20'] and price > row['MA50']:
-                    shares2 = cash // price
-                    cash -= shares2 * price
-                    shares += shares2
-                    port_val += shares2 * price
-                    
-                in_gc_window = False
-                gc_day_counter = 0
-        
-        if row['Death_Cross']:
-            cash += shares * price
-            shares = 0
-            shares2 = 0
-            port_val = 0
-            in_gc_window = False
-            gc_day_counter = 0
 
-        
-        df.loc[idx, 'Cash'] = cash
-        df.loc[idx, 'Portfolio_Value'] = port_val
-        df.loc[idx, 'Shares'] = shares
-    
-    df['Total'] = df['Portfolio_Value'] + df['Cash']
-    df['Buy_Hold'] = (starting_capital / df['Close'].iloc[0]) * df['Close']
+    df["Cash"] = 0.0
+    df["Portfolio_Value"] = 0.0
+    df["Shares"] = 0.0
+
+    cash = float(starting_capital)
+    shares = 0.0
+
+    pending_entry = initial_long
+    pending_exit = False
+
+    for idx, row in df.iterrows():
+
+        price = row["Close"]
+
+        # Execute orders generated from previously available information
+        if pending_exit and shares > 0:
+            cash += shares * price
+            shares = 0.0
+
+        if pending_entry and shares == 0:
+            shares = cash / price
+            cash = 0.0
+
+        pending_entry = False
+        pending_exit = False
+
+        # Generate today's orders
+        if row["Golden_Cross"] and shares == 0:
+            pending_entry = True
+
+        elif row["Death_Cross"] and shares > 0:
+            pending_exit = True
+
+        portfolio_value = shares * price
+
+        df.loc[idx, "Cash"] = cash
+        df.loc[idx, "Portfolio_Value"] = portfolio_value
+        df.loc[idx, "Shares"] = shares
+
+    df["Total"] = df["Cash"] + df["Portfolio_Value"]
+
+    bh_shares = starting_capital / df["Close"].iloc[0]
+    df["Buy_Hold"] = bh_shares * df["Close"]
 
     return df
 
 
-def compute_metrics(df,starting_capital):
+def compute_metrics(
+    df,
+    starting_capital,
+    risk_free_rate=0.04,
+    trading_days=252,
+):
 
     df = df.copy()
-    
-    trading_days = 252
-    risk_free_rate = 4/100
-    rf_daily = risk_free_rate / trading_days
+
     years = (df.index[-1] - df.index[0]).days / 365.25
+    rf_daily = (1 + risk_free_rate) ** (1 / trading_days) - 1
 
-    
-    #Buy Sell
-    Total_return_BS = (df.iloc[-1]['Total']-starting_capital)/starting_capital
-    
-    tot_log_returns = np.log(df['Total'] / df['Total'].shift(1))
-    excess_return = tot_log_returns - rf_daily
-    mu = excess_return.mean()
-    sigma = excess_return.std()
-    Sharpe_ratio_BS = (mu / sigma) * np.sqrt(trading_days)
-    
-    df['Running_Max'] = df['Total'].cummax()
-    df['Drawdown_BS'] = df['Total'] / df['Running_Max'] - 1
-    Maximum_drawdown_BS = df['Drawdown_BS'].min()
+    # ---------------------------------------------------------
+    # Moving-average strategy
+    # ---------------------------------------------------------
 
-    start_val = df['Total'].iloc[0]
-    end_val   = df['Total'].iloc[-1]
-    CAGR_BS = (end_val / start_val) ** (1 / years) - 1
-    
-    Calmar_BS = CAGR_BS / Maximum_drawdown_BS
+    strategy_returns = df["Total"].pct_change()
 
-    # Calculate the difference between adjacent elements
-    diff = np.diff(df['Signal'])
-    # Rising edges (0 to 1 transitions) are where diff == 1
-    rising_indices = np.where(diff == 1)[0]
-    # Falling edges (1 to 0 transitions) are where diff == -1
-    falling_indices = np.where(diff == -1)[0]
-    buy = df.iloc[rising_indices+1]['Portfolio_Value'].values
-    sell = df.iloc[falling_indices]['Portfolio_Value'].values
-    
-    if len(sell) == len(buy):
-        gains = sell-buy
+    total_return_bs = (
+        df["Total"].iloc[-1] / starting_capital - 1
+    )
+
+    cagr_bs = (
+        df["Total"].iloc[-1] / starting_capital
+    ) ** (1 / years) - 1
+
+    excess_returns_bs = strategy_returns - rf_daily
+
+    sharpe_bs = (
+        excess_returns_bs.mean()
+        / excess_returns_bs.std()
+        * np.sqrt(trading_days)
+    )
+
+    running_max_bs = df["Total"].cummax()
+
+    df["Drawdown_BS"] = (
+        df["Total"] / running_max_bs - 1
+    )
+
+    max_drawdown_bs = df["Drawdown_BS"].min()
+
+    calmar_bs = (
+        cagr_bs / abs(max_drawdown_bs)
+        if max_drawdown_bs != 0
+        else np.nan
+    )
+
+    # ---------------------------------------------------------
+    # Trade-level win rate
+    # ---------------------------------------------------------
+
+    previous_shares = df["Shares"].shift(1).fillna(0)
+
+    entry_mask = (
+        (previous_shares == 0)
+        & (df["Shares"] > 0)
+    )
+
+    exit_mask = (
+        (previous_shares > 0)
+        & (df["Shares"] == 0)
+    )
+
+    entry_prices = df.loc[entry_mask, "Close"].to_numpy()
+    exit_prices = df.loc[exit_mask, "Close"].to_numpy()
+
+    n_closed_trades = min(
+        len(entry_prices),
+        len(exit_prices),
+    )
+
+    if n_closed_trades > 0:
+        trade_returns = (
+            exit_prices[:n_closed_trades]
+            / entry_prices[:n_closed_trades]
+            - 1
+        )
+
+        win_rate_bs = np.mean(trade_returns > 0)
+
     else:
-        gains = sell-buy[0:-1]
-        print('Last buy still holding.')
-    
-    pos = np.sum(gains > 0)
-    neg = np.sum(gains < 0)
-    tot = len(gains)
-    
-    Win_rate_BS = pos/tot
+        win_rate_bs = np.nan
 
-    df['Year'] = df.index.year
-    yearly_start = df.groupby('Year')['Total'].first()
-    yearly_end   = df.groupby('Year')['Total'].last()
-    days = df.groupby('Year').apply(lambda x: (x.index[-1] - x.index[0]).days,
-    include_groups=False)
-    annualized_BS = (yearly_end / yearly_start) ** (365.25 / days) - 1
+    # ---------------------------------------------------------
+    # Buy-and-hold
+    # ---------------------------------------------------------
 
+    buy_hold_returns = df["Buy_Hold"].pct_change()
 
+    total_return_bh = (
+        df["Buy_Hold"].iloc[-1]
+        / starting_capital
+        - 1
+    )
 
+    cagr_bh = (
+        df["Buy_Hold"].iloc[-1]
+        / starting_capital
+    ) ** (1 / years) - 1
 
-    
-    #Buy Hold
-    Total_return_BH = (df.iloc[-1]['Buy_Hold']-starting_capital)/starting_capital
-    
-    tot_log_returns = np.log(df['Buy_Hold'] / df['Buy_Hold'].shift(1))
-    excess_return = tot_log_returns - rf_daily
-    mu = excess_return.mean()
-    sigma = excess_return.std()
-    Sharpe_ratio_BH = (mu / sigma) * np.sqrt(trading_days)
-    
-    df['Running_Max'] = df['Buy_Hold'].cummax()
-    df['Drawdown_BH'] = df['Buy_Hold'] / df['Running_Max'] - 1
-    Maximum_drawdown_BH = df['Drawdown_BH'].min()
+    excess_returns_bh = buy_hold_returns - rf_daily
 
-    start_val = df['Buy_Hold'].iloc[0]
-    end_val   = df['Buy_Hold'].iloc[-1]
-    CAGR_BH = (end_val / start_val) ** (1 / years) - 1
-    
-    Calmar_BH = CAGR_BH / Maximum_drawdown_BH
+    sharpe_bh = (
+        excess_returns_bh.mean()
+        / excess_returns_bh.std()
+        * np.sqrt(trading_days)
+    )
 
-    if Total_return_BH > 0:
-        Win_rate_BH = 1
-    else:
-        Win_rate_BH = 0
+    running_max_bh = df["Buy_Hold"].cummax()
 
-    df['Year'] = df.index.year
-    yearly_start = df.groupby('Year')['Buy_Hold'].first()
-    yearly_end   = df.groupby('Year')['Buy_Hold'].last()
-    days = df.groupby('Year').apply(lambda x: (x.index[-1] - x.index[0]).days,
-    include_groups=False)
-    annualized_BH = (yearly_end / yearly_start) ** (365.25 / days) - 1
+    df["Drawdown_BH"] = (
+        df["Buy_Hold"] / running_max_bh - 1
+    )
+
+    max_drawdown_bh = df["Drawdown_BH"].min()
+
+    calmar_bh = (
+        cagr_bh / abs(max_drawdown_bh)
+        if max_drawdown_bh != 0
+        else np.nan
+    )
+
+    # ---------------------------------------------------------
+    # Calendar-year returns
+    # ---------------------------------------------------------
+
+    yearly_bs = (
+        (1 + strategy_returns)
+        .groupby(df.index.year)
+        .prod()
+        - 1
+    )
+
+    yearly_bh = (
+        (1 + buy_hold_returns)
+        .groupby(df.index.year)
+        .prod()
+        - 1
+    )
 
     yearly_df = pd.DataFrame({
-    'Start': yearly_start,
-    'End': yearly_end,
-    'Days': days,
-    'Annualized_BS': annualized_BS,
-    'Annualized_BH': annualized_BH
+        "MA Strategy": yearly_bs,
+        "Buy & Hold": yearly_bh,
     })
 
-    
-    
-    data = {
-        'Buy Sell': [Total_return_BS, Sharpe_ratio_BS, Maximum_drawdown_BS, CAGR_BS, Calmar_BS, Win_rate_BS],
-        'Buy Hold': [Total_return_BH, Sharpe_ratio_BH, Maximum_drawdown_BH, CAGR_BH, Calmar_BH, Win_rate_BH]
-    }
-    
-    index = ['Total Return', 'Sharpe', 'Max Drawdown', 'CAGR', 'Calmar', 'Win Rate']
-    
-    comparison_table = pd.DataFrame(data, index=index)
+    yearly_df.index.name = "Year"
+
+    # ---------------------------------------------------------
+    # Summary table
+    # ---------------------------------------------------------
+
+    comparison_table = pd.DataFrame(
+        {
+            "MA Strategy": [
+                total_return_bs,
+                cagr_bs,
+                sharpe_bs,
+                max_drawdown_bs,
+                calmar_bs,
+                win_rate_bs,
+            ],
+            "Buy & Hold": [
+                total_return_bh,
+                cagr_bh,
+                sharpe_bh,
+                max_drawdown_bh,
+                calmar_bh,
+                np.nan,
+            ],
+        },
+        index=[
+            "Total Return",
+            "CAGR",
+            "Sharpe",
+            "Max Drawdown",
+            "Calmar",
+            "Win Rate",
+        ],
+    )
 
     return df, comparison_table, yearly_df
 
     
-def plot_performance(dA,dS,yA,yS, monthly=False):
+def plot_performance(dA, dS, yA, yS, monthly=False):
 
     plt.figure(figsize=(18, 6))
     colors = sns.color_palette("colorblind")
-    
+
     if monthly:
-        dA = dA.resample('ME').last()
-        dS = dS.resample('ME').last()
+        dA = dA.resample("ME").last()
+        dS = dS.resample("ME").last()
+
+    # ---------------------------------------------------------
+    # Equity curve
+    # ---------------------------------------------------------
 
     plt.subplot(1, 3, 1)
-    plt.title('Equity curve')
-    plt.plot(dA.index, dA['Total'], label='Total A', linewidth=1.5, color=colors[0])
-    plt.plot(dA.index, dA['Buy_Hold'], label='HODL A', linewidth=1, color=colors[1])
-    plt.plot(dS.index, dS['Buy_Hold'], label='SPY', linewidth=0.5, color=colors[2])
+
+    plt.plot(
+        dA.index,
+        dA["Total"] / dA["Total"].iloc[0],
+        label="MA Strategy",
+        linewidth=1.5,
+        color=colors[0],
+    )
+
+    plt.plot(
+        dA.index,
+        dA["Buy_Hold"] / dA["Buy_Hold"].iloc[0],
+        label="Buy & Hold AAPL",
+        linewidth=1.0,
+        color=colors[1],
+    )
+
+    plt.plot(
+        dS.index,
+        dS["Buy_Hold"] / dS["Buy_Hold"].iloc[0],
+        label="Buy & Hold SPY",
+        linewidth=1.0,
+        color=colors[2],
+    )
+
+    plt.title("Growth of Initial Capital")
+    plt.xlabel("Date")
+    plt.ylabel("Wealth Multiple")
     plt.grid(True, alpha=0.3)
-    plt.xlabel('Date')
-    plt.ylabel('Value')
     plt.legend()
-    
+
+    # ---------------------------------------------------------
+    # Drawdown
+    # ---------------------------------------------------------
+
     plt.subplot(1, 3, 2)
-    plt.title('Drawdown chart')
-    plt.plot(dA.index, dA['Drawdown_BS'], label='Total A', linewidth=1.5, color=colors[0])
-    plt.plot(dA.index, dA['Drawdown_BH'], label='HODL A', linewidth=1, color=colors[1])
-    plt.plot(dS.index, dS['Drawdown_BH'], label='SPY', linewidth=0.5, color=colors[2])
+
+    plt.plot(
+        dA.index,
+        dA["Drawdown_BS"],
+        label="MA Strategy",
+        linewidth=1.5,
+        color=colors[0],
+    )
+
+    plt.plot(
+        dA.index,
+        dA["Drawdown_BH"],
+        label="Buy & Hold AAPL",
+        linewidth=1.0,
+        color=colors[1],
+    )
+
+    plt.plot(
+        dS.index,
+        dS["Drawdown_BH"],
+        label="Buy & Hold SPY",
+        linewidth=1.0,
+        color=colors[2],
+    )
+
+    plt.title("Drawdown")
+    plt.xlabel("Date")
+    plt.ylabel("Drawdown")
     plt.grid(True, alpha=0.3)
-    plt.xlabel('Date')
-    plt.ylabel('Drawdown')
     plt.legend()
-    
+
+    # ---------------------------------------------------------
+    # Calendar-year returns
+    # ---------------------------------------------------------
+
     plt.subplot(1, 3, 3)
-    plt.title('Annual returns bar chart')
-    
+
     years = yA.index
-    x = np.arange(len(years))        # numeric positions for each year
-    width = 0.25                     # width of each bar
-    
-    plt.bar(x - width, yA['Annualized_BS'], width, label='Total A', color=colors[0])
-    plt.bar(x, yA['Annualized_BH'], width, label='HODL A', color=colors[1])
-    plt.bar(x + width, yS['Annualized_BH'], width, label='SPY', color=colors[2])
-    plt.axhline(y=0, color='black', linewidth=0.8, linestyle='--')
-    plt.xticks(x[::1], years[::1])             # replace numeric x with year labels, showing every second tick to avoid overlapping
-    plt.grid(axis='y', alpha=0.3)
-    plt.xlabel('Year')
-    plt.ylabel('Return')
-    
+    x = np.arange(len(years))
+    width = 0.25
+
+    plt.bar(
+        x - width,
+        yA["MA Strategy"],
+        width,
+        label="MA Strategy",
+        color=colors[0],
+    )
+
+    plt.bar(
+        x,
+        yA["Buy & Hold"],
+        width,
+        label="Buy & Hold AAPL",
+        color=colors[1],
+    )
+
+    plt.bar(
+        x + width,
+        yS["Buy & Hold"],
+        width,
+        label="Buy & Hold SPY",
+        color=colors[2],
+    )
+
+    plt.axhline(
+        y=0,
+        color="black",
+        linewidth=0.8,
+        linestyle="--",
+    )
+
+    plt.xticks(x, years)
+    plt.title("Calendar-Year Returns")
+    plt.xlabel("Year")
+    plt.ylabel("Return")
+    plt.grid(axis="y", alpha=0.3)
     plt.legend()
-    
+
     plt.tight_layout()
     plt.show()
